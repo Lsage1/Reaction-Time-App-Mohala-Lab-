@@ -1,7 +1,7 @@
 clc
 clear arduinoObj
 
-
+% Test
 
 arduinoObj = arduino('COM3', 'Nano3')
 
