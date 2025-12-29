@@ -297,6 +297,12 @@ class ReactionTimeApp:
         # CSV file tracking
         self.csv_filename = None  # Will be set when experiment starts
 
+        # Create UI components
+        self.create_components()
+
+        # Bind keyboard events
+        self.root.bind('<KeyPress>', self.key_pressed)
+
     def get_next_csv_filename(self):
         """Find the next available CSV filename (reaction_data_0.csv, reaction_data_1.csv, etc.)"""
         base_name = 'reaction_data'
@@ -311,12 +317,6 @@ class ReactionTimeApp:
             if not os.path.isfile(filename):
                 return filename
             version += 1
-
-        # Create UI components
-        self.create_components()
-
-        # Bind keyboard events
-        self.root.bind('<KeyPress>', self.key_pressed)
 
     def create_components(self):
         """Create all UI components"""
