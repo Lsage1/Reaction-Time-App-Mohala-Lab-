@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
 Reaction Time App - Python Version with PySerial Arduino Support
+WITH INITIAL INSTRUCTIONS, STIMULUS EXPOSURE, AND INTERMEDIATE INSTRUCTIONS
 Measures reaction times to visual, auditory, and haptic stimuli
 """
 
@@ -282,9 +283,9 @@ class ReactionTimeApp:
         self.reaction_times = []
         self.accepting_responses = False
         self.stimulus_end_time = None
-        self.stimulus_onset_time = None  # NEW: Track stimulus onset
-        self.stimulus_offset_time = None  # NEW: Track stimulus offset
-        self.keypress_timestamps = []  # NEW: Absolute timestamps of keypresses
+        self.stimulus_onset_time = None
+        self.stimulus_offset_time = None
+        self.keypress_timestamps = []
 
         # Timer objects
         self.timer_obj = None
@@ -295,7 +296,11 @@ class ReactionTimeApp:
         self.current_audio_file = None
 
         # CSV file tracking
-        self.csv_filename = None  # Will be set when experiment starts
+        self.csv_filename = None
+
+        # Phase tracking
+        self.current_phase = 'initial_instructions'  # NEW: Track experiment phase
+        self.exposure_index = 0  # NEW: Track which stimulus we're exposing
 
         # Create UI components
         self.create_components()
@@ -358,6 +363,19 @@ class ReactionTimeApp:
         )
         self.stimulus_type_label.place(x=281, y=439, width=80, height=22)
 
+        # NEW: Instructions text (initially hidden)
+        self.instructions_text = tk.Label(
+            self.root,
+            text="",
+            font=("Arial", 12),
+            bg='white',
+            fg='black',
+            wraplength=550,
+            justify='left'
+        )
+        self.instructions_text.place(x=45, y=100, width=550, height=250)
+        self.instructions_text.place_forget()
+
         # Start button (center)
         self.start_button = tk.Button(
             self.root,
@@ -383,22 +401,191 @@ class ReactionTimeApp:
             self.response_timer_obj = None
 
     def key_pressed(self, event):
-        """Handle keyboard input during response window"""
-        if not self.accepting_responses:
+        """Handle keyboard input"""
+        # NEW: Handle phase-specific key presses
+        if self.current_phase == 'initial_instructions':
+            # Key 1 to continue from initial instructions
+            if event.keysym == '1':
+                self.show_stimulus_exposure()
+
+        elif self.current_phase == 'stimulus_exposure':
+            # Keys 1, 2, 3 during exposure
+            if event.char in ['1', '2', '3']:
+                # Just acknowledge the key press during exposure
+                pass
+
+        elif self.current_phase == 'intermediate_instructions':
+            # Key 1 to continue from intermediate instructions
+            if event.keysym == '1':
+                self.start_actual_experiment()
+
+        elif self.current_phase == 'experiment':
+            # Original experiment response handling
+            if not self.accepting_responses:
+                return
+
+            # Only accept keys 1, 2, 3
+            if event.char in ['1', '2', '3']:
+                # Record absolute timestamp
+                timestamp = time.time()
+
+                # Calculate reaction time from stimulus ONSET (not offset)
+                rt = timestamp - self.stimulus_onset_time
+
+                # Store key, RT, and absolute timestamp
+                self.keys_pressed.append(event.char)
+                self.reaction_times.append(rt)
+                self.keypress_timestamps.append(timestamp)
+
+    # ========== NEW PHASE METHODS ==========
+
+    def show_initial_instructions(self):
+        """Show the initial instructions screen"""
+        self.current_phase = 'initial_instructions'
+
+        # Hide everything else
+        self.start_button.place_forget()
+        self.visual_stimulus.place_forget()
+        self.reaction_time_label.config(text='')
+        self.stimulus_type_label.config(text='')
+        self.progress_label.config(text='')
+
+        # Show instructions
+        instructions = (
+            "In this experiment, you will experience three types of cues:\n\n"
+            "• Visual (Yellow Rectangle on Screen)\n"
+            "• Auditory (Beep Sound)\n"
+            "• Haptic (Vibration from Haptic Device)\n\n"
+            "Your task is to press the keys as quickly as possible when you detect. Place the index finger of your non dominant on the haptic device, and place the fingers of your dominant hand on the external key buttons.\n\n"
+            "Press 1 to continue..."
+        )
+
+        self.instructions_text.config(text=instructions, fg='black')
+        self.instructions_text.place(x=45, y=80, width=550, height=320)
+        self.root.update()  # Force UI refresh
+
+    def show_stimulus_exposure(self):
+        """Show each stimulus type one at a time for familiarization"""
+        self.current_phase = 'stimulus_exposure'
+
+        # Hide instructions
+        self.instructions_text.place_forget()
+
+        # Define the exposure sequence: Visual, Auditory, Haptic
+        exposure_sequence = [
+            {'type': 'V', 'name': 'Visual', 'key': '1',
+             'instruction': 'You will see a YELLOW RECTANGLE.\nPress 1 when you see it.'},
+            {'type': 'A', 'name': 'Auditory', 'key': '2',
+             'instruction': 'You will hear a BEEP.\nPress 2 when you hear it.'},
+            {'type': 'H', 'name': 'Haptic', 'key': '3',
+             'instruction': 'You will feel a VIBRATION.\nPress 3 when you feel it.'}
+        ]
+
+        if self.exposure_index >= len(exposure_sequence):
+            # Done with exposure, move to intermediate instructions
+            self.show_intermediate_instructions()
             return
 
-        # Only accept keys 1, 2, 3
-        if event.char in ['1', '2', '3']:
-            # Record absolute timestamp
-            timestamp = time.time()
+        current_exposure = exposure_sequence[self.exposure_index]
 
-            # Calculate reaction time from stimulus ONSET (not offset)
-            rt = timestamp - self.stimulus_onset_time
+        # Show instruction for this stimulus
+        self.instructions_text.config(text=current_exposure['instruction'], fg='black')
+        self.instructions_text.place(x=45, y=80, width=550, height=100)
+        self.root.update()  # Force UI refresh
 
-            # Store key, RT, and absolute timestamp
-            self.keys_pressed.append(event.char)
-            self.reaction_times.append(rt)
-            self.keypress_timestamps.append(timestamp)
+        # Schedule stimulus presentation after 2 seconds
+        self.timer_obj = Timer(2.0, lambda: self.present_exposure_stimulus(current_exposure['type']))
+        self.timer_obj.start()
+
+    def present_exposure_stimulus(self, stim_type):
+        """Present a single stimulus during the exposure phase"""
+        # Clear instruction text
+        self.instructions_text.place_forget()
+
+        # Present the stimulus
+        try:
+            if stim_type == 'V':
+                self.visual_stimulus.place(x=191, y=131, width=260, height=221)
+                self.stimulus_type_label.config(text='VISUAL (Press 1)')
+
+            elif stim_type == 'A':
+                self.current_audio_file = AudioGenerator.play_tone(440, 0.4)
+                self.stimulus_type_label.config(text='AUDITORY (Press 2)')
+
+            elif stim_type == 'H':
+                if self.arduino_connected:
+                    self.arduino.haptic_on()
+                self.stimulus_type_label.config(text='HAPTIC (Press 3)')
+
+        except Exception as e:
+            print(f"Error presenting exposure stimulus: {e}")
+
+        # Turn off stimulus after 0.5 seconds
+        self.timer_obj = Timer(0.5, self.end_exposure_stimulus)
+        self.timer_obj.start()
+
+    def end_exposure_stimulus(self):
+        """End the current exposure stimulus and move to next"""
+        # Turn off all stimuli
+        self.visual_stimulus.place_forget()
+        if self.arduino_connected:
+            self.arduino.haptic_off()
+
+        self.stimulus_type_label.config(text='')
+
+        # Move to next exposure
+        self.exposure_index += 1
+
+        # Wait 1.5 seconds before next exposure
+        self.timer_obj = Timer(1.5, self.show_stimulus_exposure)
+        self.timer_obj.start()
+
+    def show_intermediate_instructions(self):
+        """Show instructions before starting the actual experiment"""
+        self.current_phase = 'intermediate_instructions'
+
+        # Hide everything
+        self.visual_stimulus.place_forget()
+        self.stimulus_type_label.config(text='')
+
+        # Show intermediate instructions
+        instructions = (
+            "Great! Now you've experienced all three stimulus types.\n\n"
+            "In the actual experiment:\n\n"
+            "• Stimuli may appear ALONE or in COMBINATION\n"
+            "• Press ALL the keys that match what you detect\n"
+            "• For example, if you see AND hear, press 1 AND 2\n"
+            "• Respond as quickly as possible!\n\n"
+            "Press 1 when you're ready to begin..."
+        )
+
+        self.instructions_text.config(text=instructions, fg='black')
+        self.instructions_text.place(x=45, y=60, width=550, height=360)
+        self.root.update()  # Force UI refresh
+
+    def start_actual_experiment(self):
+        """Start the actual experiment after intermediate instructions"""
+        self.current_phase = 'experiment'
+
+        # Hide instructions
+        self.instructions_text.place_forget()
+
+        # Reset UI
+        self.visual_stimulus.place_forget()
+        self.stimulus_type_label.config(text='')
+        self.reaction_time_label.config(text='')
+
+        # Generate trial list
+        modes = ['V', 'A', 'H', 'VA', 'VH', 'AH', 'VAH']
+        self.trial_list = modes * 10  # 70 trials total
+        random.shuffle(self.trial_list)
+
+        self.current_trial_index = 0
+
+        # Start first trial
+        self.start_next_trial()
+
+    # ========== ORIGINAL EXPERIMENT METHODS (unchanged) ==========
 
     # --- STATE 1: Start Stimulus ---
     def start_stimulus(self):
@@ -406,7 +593,7 @@ class ReactionTimeApp:
         # Reset trial data
         self.keys_pressed = []
         self.reaction_times = []
-        self.keypress_timestamps = []  # NEW: Reset timestamps
+        self.keypress_timestamps = []
         self.reaction_time_label.config(text='')
         self.stimulus_type_label.config(text=self.current_stimulus)
 
@@ -479,7 +666,7 @@ class ReactionTimeApp:
 
         # Start accepting responses
         self.accepting_responses = True
-        self.stimulus_end_time = time.time()  # Keep for compatibility
+        self.stimulus_end_time = time.time()
 
         # Schedule end of response window after 1.5 seconds
         self.response_timer_obj = Timer(1.5, self.end_response_window)
@@ -534,7 +721,6 @@ class ReactionTimeApp:
         csv_file = self.csv_filename
 
         # Check if file exists to determine if we need headers
-        # (Should only need header on first write to new file)
         file_exists = os.path.isfile(csv_file)
 
         # Format timestamps as datetime strings
@@ -625,7 +811,7 @@ class ReactionTimeApp:
         self.timer_obj.start()
 
     def start_button_pushed(self):
-        """Handle start button click"""
+        """Handle start button click - NOW SHOWS INITIAL INSTRUCTIONS"""
         # Clean up any existing timers
         self.cleanup_all_timers()
 
@@ -644,23 +830,8 @@ class ReactionTimeApp:
                 print(f"Motor test response: {response}")
             time.sleep(0.5)  # Brief pause after test
 
-        # Hide start button
-        self.start_button.place_forget()
-
-        # Reset UI
-        self.visual_stimulus.place_forget()
-        self.stimulus_type_label.config(text='')
-        self.reaction_time_label.config(text='')
-
-        # Generate trial list
-        modes = ['V', 'A', 'H', 'VA', 'VH', 'AH', 'VAH']
-        self.trial_list = modes * 10  # 70 trials total
-        random.shuffle(self.trial_list)
-
-        self.current_trial_index = 0
-
-        # Start first trial
-        self.start_next_trial()
+        # NEW: Show initial instructions instead of starting experiment immediately
+        self.show_initial_instructions()
 
     def cleanup(self):
         """Cleanup before closing"""
