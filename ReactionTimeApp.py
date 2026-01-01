@@ -268,7 +268,11 @@ class ReactionTimeApp:
     def __init__(self, root):
         self.root = root
         self.root.title("Reaction Time Experiment")
+
+        # Make window resizable
         self.root.geometry("640x480")
+        self.root.resizable(True, True)
+
         self.root.configure(bg='white')
 
         # Arduino setup with PySerial
@@ -325,7 +329,7 @@ class ReactionTimeApp:
 
     def create_components(self):
         """Create all UI components"""
-        # Reaction time label (top left)
+        # Reaction time label (top left) - HIDDEN, keeping for compatibility
         self.reaction_time_label = tk.Label(
             self.root,
             text="Reaction Time:",
@@ -333,7 +337,7 @@ class ReactionTimeApp:
             bg='white',
             anchor='w'
         )
-        self.reaction_time_label.place(x=21, y=21, width=162, height=22)
+        # self.reaction_time_label.place(x=21, y=21, width=162, height=22)  # Commented out to hide
 
         # Progress label (top right)
         self.progress_label = tk.Label(
@@ -341,9 +345,10 @@ class ReactionTimeApp:
             text="Trial: 0/70",
             font=("Arial", 10),
             bg='white',
+            fg='black',
             anchor='e'
         )
-        self.progress_label.place(x=517, y=21, width=102, height=22)
+        self.progress_label.place(relx=1.0, x=-10, y=21, width=102, height=22, anchor='ne')
 
         # Visual stimulus panel (yellow rectangle, initially hidden)
         self.visual_stimulus = tk.Frame(
@@ -351,29 +356,31 @@ class ReactionTimeApp:
             bg='#FFE864',  # Yellow color
             highlightthickness=0
         )
-        self.visual_stimulus.place(x=191, y=131, width=260, height=221)
+        # Use relative positioning to center
+        self.visual_stimulus.place(relx=0.5, rely=0.5, width=260, height=221, anchor='center')
         self.visual_stimulus.place_forget()  # Hide initially
 
-        # Stimulus type label (bottom center)
+        # Stimulus type label (bottom center) - HIDDEN, keeping for compatibility
         self.stimulus_type_label = tk.Label(
             self.root,
             text="Stimulus Type",
             font=("Arial", 10),
             bg='white'
         )
-        self.stimulus_type_label.place(x=281, y=439, width=80, height=22)
+        # self.stimulus_type_label.place(x=281, y=439, width=80, height=22)  # Commented out to hide
 
         # NEW: Instructions text (initially hidden)
         self.instructions_text = tk.Label(
             self.root,
             text="",
-            font=("Arial", 12),
+            font=("Arial", 20),
             bg='white',
             fg='black',
             wraplength=550,
             justify='left'
         )
-        self.instructions_text.place(x=45, y=100, width=550, height=250)
+        # Use relative positioning to center
+        self.instructions_text.place(relx=0.5, rely=0.4, width=550, height=250, anchor='center')
         self.instructions_text.place_forget()
 
         # Start button (center)
@@ -386,7 +393,7 @@ class ReactionTimeApp:
             command=self.start_button_pushed,
             relief=tk.FLAT
         )
-        self.start_button.place(x=197, y=203, width=247, height=77)
+        self.start_button.place(relx=0.5, rely=0.5, width=247, height=77, anchor='center')
 
     def cleanup_all_timers(self):
         """Cancel all active timers"""
@@ -456,12 +463,12 @@ class ReactionTimeApp:
             "• Visual (Yellow Rectangle on Screen)\n"
             "• Auditory (Beep Sound)\n"
             "• Haptic (Vibration from Haptic Device)\n\n"
-            "Your task is to press the keys as quickly as possible when you detect. Place the index finger of your non dominant on the haptic device, and place the fingers of your dominant hand on the external key buttons.\n\n"
-            "Press 1 to continue..."
+            "Your task is to press the keys as quickly as possible when you detect a cue. Place the index finger of your non dominant on the haptic device, and place the fingers of your dominant hand on the external key buttons.\n\n"
+            "Press 1 to see example..."
         )
 
         self.instructions_text.config(text=instructions, fg='black')
-        self.instructions_text.place(x=45, y=80, width=550, height=320)
+        self.instructions_text.place(relx=0.5, rely=0.4, width=550, height=320, anchor='center')
         self.root.update()  # Force UI refresh
 
     def show_stimulus_exposure(self):
@@ -490,7 +497,7 @@ class ReactionTimeApp:
 
         # Show instruction for this stimulus
         self.instructions_text.config(text=current_exposure['instruction'], fg='black')
-        self.instructions_text.place(x=45, y=80, width=550, height=100)
+        self.instructions_text.place(relx=0.5, rely=0.3, width=550, height=100, anchor='center')
         self.root.update()  # Force UI refresh
 
         # Schedule stimulus presentation after 2 seconds
@@ -505,7 +512,7 @@ class ReactionTimeApp:
         # Present the stimulus
         try:
             if stim_type == 'V':
-                self.visual_stimulus.place(x=191, y=131, width=260, height=221)
+                self.visual_stimulus.place(relx=0.5, rely=0.5, width=260, height=221, anchor='center')
                 self.stimulus_type_label.config(text='VISUAL (Press 1)')
 
             elif stim_type == 'A':
@@ -560,8 +567,30 @@ class ReactionTimeApp:
         )
 
         self.instructions_text.config(text=instructions, fg='black')
-        self.instructions_text.place(x=45, y=60, width=550, height=360)
+        self.instructions_text.place(relx=0.5, rely=0.4, width=550, height=360, anchor='center')
         self.root.update()  # Force UI refresh
+
+    def show_completion_page(self):
+        """Show the completion page with survey link"""
+        self.current_phase = 'completed'
+
+        # Clean up experiment
+        self.visual_stimulus.place_forget()
+        self.progress_label.config(text='')
+        self.cleanup_all_timers()
+        if self.arduino_connected:
+            self.arduino.haptic_off()
+
+        # Show completion message
+        completion_message = (
+            "You have completed the testing, thank you for participating.\n\n"
+            "Please fill out this survey before notifying your proctor.\n\n"
+            "Survey link: [SURVEY URL HERE]"
+        )
+
+        self.instructions_text.config(text=completion_message, fg='black', font=("Arial", 20))
+        self.instructions_text.place(relx=0.5, rely=0.45, width=550, height=200, anchor='center')
+        self.root.update()
 
     def start_actual_experiment(self):
         """Start the actual experiment after intermediate instructions"""
@@ -577,7 +606,7 @@ class ReactionTimeApp:
 
         # Generate trial list
         modes = ['V', 'A', 'H', 'VA', 'VH', 'AH', 'VAH']
-        self.trial_list = modes * 10  # 70 trials total
+        self.trial_list = modes * 1  # TESTING: 7 trials only (change back to * 10 for real experiment)
         random.shuffle(self.trial_list)
 
         self.current_trial_index = 0
@@ -613,7 +642,7 @@ class ReactionTimeApp:
         # Present stimulus based on type
         try:
             if self.current_stimulus == 'V':
-                self.visual_stimulus.place(x=191, y=131, width=260, height=221)
+                self.visual_stimulus.place(relx=0.5, rely=0.5, width=260, height=221, anchor='center')
 
             elif self.current_stimulus == 'A':
                 self.current_audio_file = AudioGenerator.play_tone(440, 0.4)
@@ -623,11 +652,11 @@ class ReactionTimeApp:
                     self.arduino.haptic_on()
 
             elif self.current_stimulus == 'VA':
-                self.visual_stimulus.place(x=191, y=131, width=260, height=221)
+                self.visual_stimulus.place(relx=0.5, rely=0.5, width=260, height=221, anchor='center')
                 self.current_audio_file = AudioGenerator.play_tone(440, 0.4)
 
             elif self.current_stimulus == 'VH':
-                self.visual_stimulus.place(x=191, y=131, width=260, height=221)
+                self.visual_stimulus.place(relx=0.5, rely=0.5, width=260, height=221, anchor='center')
                 if self.arduino_connected:
                     self.arduino.haptic_on()
 
@@ -637,7 +666,7 @@ class ReactionTimeApp:
                     self.arduino.haptic_on()
 
             elif self.current_stimulus == 'VAH':
-                self.visual_stimulus.place(x=191, y=131, width=260, height=221)
+                self.visual_stimulus.place(relx=0.5, rely=0.5, width=260, height=221, anchor='center')
                 self.current_audio_file = AudioGenerator.play_tone(440, 0.4)
                 if self.arduino_connected:
                     self.arduino.haptic_on()
@@ -784,13 +813,7 @@ class ReactionTimeApp:
         """Start the next trial or finish experiment"""
         # Check if experiment is finished
         if self.current_trial_index >= len(self.trial_list):
-            self.stimulus_type_label.config(text='Experiment Complete!')
-            self.reaction_time_label.config(text='')
-            self.visual_stimulus.place_forget()
-            self.progress_label.config(text=f'Trial {len(self.trial_list)} of {len(self.trial_list)}')
-            self.cleanup_all_timers()
-            if self.arduino_connected:
-                self.arduino.haptic_off()
+            self.show_completion_page()
             return
 
         # Reset UI
