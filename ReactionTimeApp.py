@@ -275,6 +275,10 @@ class ReactionTimeApp:
 
         self.root.configure(bg='white')
 
+        # ===== CONFIGURATION =====
+        self.SHOW_TRIAL_NUMBER = False  # Set to True to show trial number, False to hide
+        # =========================
+
         # Arduino setup with PySerial
         self.arduino = ArduinoController()
         self.arduino_connected = False
@@ -348,7 +352,9 @@ class ReactionTimeApp:
             fg='black',
             anchor='e'
         )
-        self.progress_label.place(relx=1.0, x=-10, y=21, width=102, height=22, anchor='ne')
+        if self.SHOW_TRIAL_NUMBER:
+            self.progress_label.place(relx=1.0, x=-10, y=21, width=102, height=22, anchor='ne')
+        # If SHOW_TRIAL_NUMBER is False, don't place it (remains hidden)
 
         # Visual stimulus panel (yellow rectangle, initially hidden)
         self.visual_stimulus = tk.Frame(
@@ -512,13 +518,13 @@ class ReactionTimeApp:
         self.instructions_text.place(relx=0.5, rely=0.3, width=550, height=100, anchor='center')
         self.root.update()  # Force UI refresh
 
-        # Schedule stimulus presentation after 2 seconds
+        # Wait 2 seconds before presenting stimulus
         self.timer_obj = Timer(2.0, lambda: self.present_exposure_stimulus(current_exposure['type']))
         self.timer_obj.start()
 
     def present_exposure_stimulus(self, stim_type):
         """Present a single stimulus during the exposure phase"""
-        # Clear instruction text
+        # Clear instruction text BEFORE presenting stimulus
         self.instructions_text.place_forget()
 
         # Present the stimulus
@@ -539,7 +545,7 @@ class ReactionTimeApp:
         except Exception as e:
             print(f"Error presenting exposure stimulus: {e}")
 
-        # Turn off stimulus after 0.5 seconds
+        # Turn off stimulus after 0.5 seconds (matching experiment timing)
         self.timer_obj = Timer(0.5, self.end_exposure_stimulus)
         self.timer_obj.start()
 
@@ -555,8 +561,8 @@ class ReactionTimeApp:
         # Move to next exposure
         self.exposure_index += 1
 
-        # Wait 1.5 seconds before next exposure
-        self.timer_obj = Timer(1.5, self.show_stimulus_exposure)
+        # Wait 2 seconds before next exposure
+        self.timer_obj = Timer(2.0, self.show_stimulus_exposure)
         self.timer_obj.start()
 
     def show_intermediate_instructions(self):
@@ -834,10 +840,13 @@ class ReactionTimeApp:
 
         # Set current stimulus
         self.current_stimulus = self.trial_list[self.current_trial_index]
-        self.progress_label.config(text=f'Trial {self.current_trial_index + 1} of {len(self.trial_list)}')
 
-        # Random delay before stimulus (1.5-3.5 seconds)
-        delay = 1.5 + random.random() * 2
+        # Update progress label only if SHOW_TRIAL_NUMBER is True
+        if self.SHOW_TRIAL_NUMBER:
+            self.progress_label.config(text=f'Trial {self.current_trial_index + 1} of {len(self.trial_list)}')
+
+        # Random delay before stimulus (2-5 seconds)
+        delay = 2 + random.random() * 3
 
         # Schedule stimulus
         self.timer_obj = Timer(delay, self.start_stimulus)
