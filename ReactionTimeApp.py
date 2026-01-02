@@ -528,7 +528,7 @@ class ReactionTimeApp:
                 self.stimulus_type_label.config(text='VISUAL (Press 1)')
 
             elif stim_type == 'A':
-                self.current_audio_file = AudioGenerator.play_tone(440, 0.4)
+                self.current_audio_file = AudioGenerator.play_tone(440, 0.5)
                 self.stimulus_type_label.config(text='AUDITORY (Press 2)')
 
             elif stim_type == 'H':
@@ -618,7 +618,7 @@ class ReactionTimeApp:
 
         # Generate trial list
         modes = ['V', 'A', 'H', 'VA', 'VH', 'AH', 'VAH']
-        self.trial_list = modes * 1  # TESTING: 7 trials only (change back to * 10 for real experiment)
+        self.trial_list = modes * 10  # TESTING: 7 trials only (change back to * 10 for real experiment)
         random.shuffle(self.trial_list)
 
         self.current_trial_index = 0
@@ -626,7 +626,7 @@ class ReactionTimeApp:
         # Start first trial
         self.start_next_trial()
 
-    # ========== ORIGINAL EXPERIMENT METHODS (unchanged) ==========
+    # ========== ORIGINAL EXPERIMENT METHODS (MODIFIED FOR EARLY RESPONSE) ==========
 
     # --- STATE 1: Start Stimulus ---
     def start_stimulus(self):
@@ -638,9 +638,6 @@ class ReactionTimeApp:
         self.reaction_time_label.config(text='')
         self.stimulus_type_label.config(text=self.current_stimulus)
 
-        # Disable responses
-        self.accepting_responses = False
-
         # Turn off visual/haptic initially
         self.visual_stimulus.place_forget()
         if self.arduino_connected:
@@ -651,13 +648,16 @@ class ReactionTimeApp:
         # RECORD STIMULUS ONSET TIME (before presenting stimulus)
         self.stimulus_onset_time = time.time()
 
+        # ENABLE RESPONSES IMMEDIATELY when stimulus starts
+        self.accepting_responses = True
+
         # Present stimulus based on type
         try:
             if self.current_stimulus == 'V':
                 self.visual_stimulus.place(relx=0.5, rely=0.5, width=260, height=221, anchor='center')
 
             elif self.current_stimulus == 'A':
-                self.current_audio_file = AudioGenerator.play_tone(440, 0.4)
+                self.current_audio_file = AudioGenerator.play_tone(440, 0.5)
 
             elif self.current_stimulus == 'H':
                 if self.arduino_connected:
@@ -665,7 +665,7 @@ class ReactionTimeApp:
 
             elif self.current_stimulus == 'VA':
                 self.visual_stimulus.place(relx=0.5, rely=0.5, width=260, height=221, anchor='center')
-                self.current_audio_file = AudioGenerator.play_tone(440, 0.4)
+                self.current_audio_file = AudioGenerator.play_tone(440, 0.5)
 
             elif self.current_stimulus == 'VH':
                 self.visual_stimulus.place(relx=0.5, rely=0.5, width=260, height=221, anchor='center')
@@ -673,13 +673,13 @@ class ReactionTimeApp:
                     self.arduino.haptic_on()
 
             elif self.current_stimulus == 'AH':
-                self.current_audio_file = AudioGenerator.play_tone(440, 0.4)
+                self.current_audio_file = AudioGenerator.play_tone(440, 0.5)
                 if self.arduino_connected:
                     self.arduino.haptic_on()
 
             elif self.current_stimulus == 'VAH':
                 self.visual_stimulus.place(relx=0.5, rely=0.5, width=260, height=221, anchor='center')
-                self.current_audio_file = AudioGenerator.play_tone(440, 0.4)
+                self.current_audio_file = AudioGenerator.play_tone(440, 0.5)
                 if self.arduino_connected:
                     self.arduino.haptic_on()
 
@@ -689,12 +689,16 @@ class ReactionTimeApp:
         self.root.update()
 
         # Schedule stimulus offset after 0.5 seconds
-        self.stim_timer_obj = Timer(0.5, self.begin_response_window)
+        self.stim_timer_obj = Timer(0.5, self.turn_off_stimulus)
         self.stim_timer_obj.start()
 
-    # --- STATE 2: Begin Response Window ---
-    def begin_response_window(self):
-        """Turn off stimuli and start accepting responses"""
+        # Schedule end of response window after 1.5 seconds total
+        self.response_timer_obj = Timer(1.5, self.end_response_window)
+        self.response_timer_obj.start()
+
+    # --- STATE 2: Turn Off Stimulus (but keep accepting responses) ---
+    def turn_off_stimulus(self):
+        """Turn off stimuli but continue accepting responses"""
         # RECORD STIMULUS OFFSET TIME (before turning off)
         self.stimulus_offset_time = time.time()
 
@@ -705,13 +709,7 @@ class ReactionTimeApp:
 
         self.root.update()
 
-        # Start accepting responses
-        self.accepting_responses = True
-        self.stimulus_end_time = time.time()
-
-        # Schedule end of response window after 1.5 seconds
-        self.response_timer_obj = Timer(1.5, self.end_response_window)
-        self.response_timer_obj.start()
+        # Keep accepting responses (don't change self.accepting_responses)
 
     # --- STATE 3: End Response Window ---
     def end_response_window(self):
