@@ -333,7 +333,7 @@ class ReactionTimeApp:
         self.reaction_time_label = tk.Label(
             self.root,
             text="Reaction Time:",
-            font=("Arial", 10),
+            font=("Nunito", 10),
             bg='white',
             anchor='w'
         )
@@ -343,7 +343,7 @@ class ReactionTimeApp:
         self.progress_label = tk.Label(
             self.root,
             text="Trial: 0/70",
-            font=("Arial", 10),
+            font=("Nunito", 10),
             bg='white',
             fg='black',
             anchor='e'
@@ -364,7 +364,7 @@ class ReactionTimeApp:
         self.stimulus_type_label = tk.Label(
             self.root,
             text="Stimulus Type",
-            font=("Arial", 10),
+            font=("Nunito", 10),
             bg='white'
         )
         # self.stimulus_type_label.place(x=281, y=439, width=80, height=22)  # Commented out to hide
@@ -373,7 +373,7 @@ class ReactionTimeApp:
         self.instructions_text = tk.Label(
             self.root,
             text="",
-            font=("Arial", 20),
+            font=("Nunito", 20),
             bg='white',
             fg='black',
             wraplength=550,
@@ -383,17 +383,29 @@ class ReactionTimeApp:
         self.instructions_text.place(relx=0.5, rely=0.4, width=550, height=250, anchor='center')
         self.instructions_text.place_forget()
 
-        # Start button (center)
-        self.start_button = tk.Button(
-            self.root,
-            text="Start",
-            font=("Arial", 30, "bold"),
-            bg='#00663E',  # Dark green
-            fg='white',
-            command=self.start_button_pushed,
-            relief=tk.FLAT
+        # Start button (center) - Using Canvas for reliable color on macOS
+        self.start_button_frame = tk.Frame(self.root, bg='white', highlightthickness=0)
+        self.start_button_frame.place(relx=0.5, rely=0.5, width=370, height=115, anchor='center')
+
+        self.start_button_canvas = tk.Canvas(
+            self.start_button_frame,
+            bg='#00674F',
+            highlightthickness=0,
+            cursor='hand2'
         )
-        self.start_button.place(relx=0.5, rely=0.5, width=247, height=77, anchor='center')
+        self.start_button_canvas.pack(fill=tk.BOTH, expand=True)
+
+        self.start_button_text = self.start_button_canvas.create_text(
+            185, 57.5,
+            text="Start",
+            font=("Nunito", 30, "bold"),
+            fill='white'
+        )
+
+        self.start_button_canvas.bind('<Button-1>', lambda e: self.start_button_pushed())
+
+        # Keep reference for compatibility
+        self.start_button = self.start_button_frame
 
     def cleanup_all_timers(self):
         """Cancel all active timers"""
@@ -588,7 +600,7 @@ class ReactionTimeApp:
             "Survey link: [SURVEY URL HERE]"
         )
 
-        self.instructions_text.config(text=completion_message, fg='black', font=("Arial", 20))
+        self.instructions_text.config(text=completion_message, fg='black', font=("Nunito", 20))
         self.instructions_text.place(relx=0.5, rely=0.45, width=550, height=200, anchor='center')
         self.root.update()
 
