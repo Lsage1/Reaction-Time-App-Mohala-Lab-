@@ -317,12 +317,12 @@ class ReactionTimeApp:
         self.root.bind('<KeyPress>', self.key_pressed)
 
     def get_next_csv_filename(self):
-        """Find the next available CSV filename (reaction_data_0.csv, reaction_data_1.csv, etc.)"""
-        base_name = 'reaction_data'
+        """Find the next available CSV filename (three_button_reaction_data_1.csv, three_button_reaction_data_2.csv, etc.)"""
+        base_name = 'three_button_reaction_data'
         extension = '.csv'
 
-        # Start with version 0
-        version = 0
+        # Start with version 1
+        version = 1
 
         # Keep incrementing until we find a filename that doesn't exist
         while True:
@@ -481,7 +481,7 @@ class ReactionTimeApp:
             "• Visual (Yellow Rectangle on Screen)\n"
             "• Auditory (Beep Sound)\n"
             "• Haptic (Vibration from Haptic Device)\n\n"
-            "Your task is to press the keys as quickly as possible when you detect a cue. Place the index finger of your non dominant on the haptic device, and place the fingers of your dominant hand on the external key buttons.\n\n"
+            "Your task is to press the keys as quickly as possible when you detect ANY cue. Place the index finger of your non dominant on the haptic device, and place the fingers of your dominant hand on the external key buttons.\n\n"
             "Press 1 to see example..."
         )
 
