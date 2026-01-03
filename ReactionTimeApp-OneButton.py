@@ -44,7 +44,7 @@ class AudioGenerator:
     """Simple audio tone generator using built-in libraries"""
 
     @staticmethod
-    def generate_tone(frequency=440, duration=0.4, sample_rate=44100):
+    def generate_tone(frequency=440, duration=0.5, sample_rate=44100):
         """Generate a WAV file with a sine wave tone"""
         import math
         num_samples = int(sample_rate * duration)
@@ -66,7 +66,7 @@ class AudioGenerator:
         return temp_filename
 
     @staticmethod
-    def play_tone(frequency=440, duration=0.4):
+    def play_tone(frequency=440, duration=0.5):
         """Play a tone using platform-specific method"""
         wav_file = AudioGenerator.generate_tone(frequency, duration)
 
@@ -240,7 +240,7 @@ class SingleButtonReactionApp:
         self.root.configure(bg='white')
 
         # ===== CONFIGURATION =====
-        self.SHOW_TRIAL_NUMBER = False
+        self.SHOW_TRIAL_NUMBER = True
         # =========================
 
         # Arduino setup
@@ -273,6 +273,8 @@ class SingleButtonReactionApp:
         # Phase tracking
         self.current_phase = 'initial_instructions'
         self.exposure_index = 0
+        self.last_key_1_time = 0  # For double-click detection
+        self.in_selection_screen = False  # Track if we're in selection screen
 
         # Create UI components
         self.create_components()
@@ -358,7 +360,7 @@ class SingleButtonReactionApp:
         # Selection title
         self.selection_title = tk.Label(
             self.selection_frame,
-            text="Which cue(s) did you feel?",
+            text="Which cue(s) did you feel?\nPress 1 twice when done",
             font=("Nunito", 24, "bold"),
             bg='white',
             fg='black'
@@ -375,34 +377,46 @@ class SingleButtonReactionApp:
 
         self.visual_check = tk.Checkbutton(
             self.selection_frame,
-            text="Visual (Yellow Rectangle)",
+            text="Visual (Yellow Rectangle) - Press 1",
             variable=self.visual_var,
             font=checkbox_font,
             bg='white',
             activebackground='white',
-            highlightthickness=0
+            highlightthickness=2,
+            highlightbackground='#333333',
+            highlightcolor='#333333',
+            borderwidth=2,
+            relief='solid'
         )
         self.visual_check.pack(pady=15, anchor='w', padx=50)
 
         self.audio_check = tk.Checkbutton(
             self.selection_frame,
-            text="Auditory (Beep Sound)",
+            text="Auditory (Beep Sound) - Press 2",
             variable=self.audio_var,
             font=checkbox_font,
             bg='white',
             activebackground='white',
-            highlightthickness=0
+            highlightthickness=2,
+            highlightbackground='#333333',
+            highlightcolor='#333333',
+            borderwidth=2,
+            relief='solid'
         )
         self.audio_check.pack(pady=15, anchor='w', padx=50)
 
         self.haptic_check = tk.Checkbutton(
             self.selection_frame,
-            text="Haptic (Vibration)",
+            text="Haptic (Vibration) - Press 3",
             variable=self.haptic_var,
             font=checkbox_font,
             bg='white',
             activebackground='white',
-            highlightthickness=0
+            highlightthickness=2,
+            highlightbackground='#333333',
+            highlightcolor='#333333',
+            borderwidth=2,
+            relief='solid'
         )
         self.haptic_check.pack(pady=15, anchor='w', padx=50)
 
@@ -427,7 +441,7 @@ class SingleButtonReactionApp:
             fill='white'
         )
 
-        self.continue_button_canvas.bind('<Button-1>', lambda e: self.selection_continue())
+        self.continue_button_canvas.bind('<Button-1>', lambda e: self.handle_selection_continue())
 
     def cleanup_all_timers(self):
         """Cancel all active timers"""
@@ -447,15 +461,48 @@ class SingleButtonReactionApp:
             if event.keysym == '1':
                 self.show_stimulus_exposure()
 
+        elif self.current_phase == 'stimulus_exposure':
+            # If in selection screen, handle checkbox selection
+            if self.in_selection_screen:
+                self.handle_selection_key(event.keysym)
+            # Otherwise, Key 1 during exposure to practice the response
+            elif self.accepting_responses and not self.response_button_pressed:
+                if event.keysym == '1':
+                    self.record_exposure_response()
+
         elif self.current_phase == 'intermediate_instructions':
             if event.keysym == '1':
                 self.start_actual_experiment()
 
         elif self.current_phase == 'experiment':
-            # Single button (space bar) for response
-            if self.accepting_responses and not self.response_button_pressed:
-                if event.keysym == 'space':
+            # If in selection screen, handle checkbox selection
+            if self.in_selection_screen:
+                self.handle_selection_key(event.keysym)
+            # Otherwise, single button (key 1) for response
+            elif self.accepting_responses and not self.response_button_pressed:
+                if event.keysym == '1':
                     self.record_response()
+
+    def handle_selection_key(self, key):
+        """Handle keyboard input during selection screen"""
+        if key == '1':
+            # Check for double-click (within 0.5 seconds)
+            current_time = time.time()
+            if current_time - self.last_key_1_time < 0.5:
+                # Double-click detected - submit
+                self.handle_selection_continue()
+            else:
+                # Single click - toggle Visual checkbox
+                self.visual_var.set(1 - self.visual_var.get())
+            self.last_key_1_time = current_time
+
+        elif key == '2':
+            # Toggle Auditory checkbox
+            self.audio_var.set(1 - self.audio_var.get())
+
+        elif key == '3':
+            # Toggle Haptic checkbox
+            self.haptic_var.set(1 - self.haptic_var.get())
 
     def show_initial_instructions(self):
         """Show the initial instructions screen"""
@@ -470,7 +517,7 @@ class SingleButtonReactionApp:
             "• Visual (Yellow Rectangle on Screen)\n"
             "• Auditory (Beep Sound)\n"
             "• Haptic (Vibration from Haptic Device)\n\n"
-            "Your task is to press the SPACE BAR as quickly as possible when you detect ANY cue.\n\n"
+            "Your task is to press KEY 1 as quickly as possible when you detect ANY cue.\n\n"
             "After pressing, you'll select which cue(s) you felt.\n\n"
             "Press 1 to see example..."
         )
@@ -486,11 +533,11 @@ class SingleButtonReactionApp:
 
         exposure_sequence = [
             {'type': 'V', 'name': 'Visual',
-             'instruction': 'You will see a YELLOW RECTANGLE.\nPress SPACE BAR when you see it.'},
+             'instruction': 'You will see a YELLOW RECTANGLE.\nPress 1 when you see it.'},
             {'type': 'A', 'name': 'Auditory',
-             'instruction': 'You will hear a BEEP.\nPress SPACE BAR when you hear it.'},
+             'instruction': 'You will hear a BEEP.\nPress 1 when you hear it.'},
             {'type': 'H', 'name': 'Haptic',
-             'instruction': 'You will feel a VIBRATION.\nPress SPACE BAR when you feel it.'}
+             'instruction': 'You will feel a VIBRATION.\nPress 1 when you feel it.'}
         ]
 
         if self.exposure_index >= len(exposure_sequence):
@@ -510,6 +557,15 @@ class SingleButtonReactionApp:
         """Present a single stimulus during the exposure phase"""
         self.instructions_text.place_forget()
 
+        # Reset exposure response state
+        self.response_button_pressed = False
+        self.reaction_time = None
+        self.response_time = None
+
+        # Record onset time and enable responses
+        self.stimulus_onset_time = time.time()
+        self.accepting_responses = True
+
         try:
             if stim_type == 'V':
                 self.visual_stimulus.place(relx=0.5, rely=0.5, width=260, height=221, anchor='center')
@@ -521,16 +577,94 @@ class SingleButtonReactionApp:
         except Exception as e:
             print(f"Error presenting exposure stimulus: {e}")
 
-        self.timer_obj = Timer(0.5, self.end_exposure_stimulus)
-        self.timer_obj.start()
+        # Turn off stimulus after 0.5 seconds
+        self.stim_timer_obj = Timer(0.5, self.turn_off_exposure_stimulus)
+        self.stim_timer_obj.start()
 
-    def end_exposure_stimulus(self):
-        """End the current exposure stimulus and move to next"""
+        # End response window after 1.5 seconds
+        self.response_timer_obj = Timer(1.5, self.end_exposure_response_window)
+        self.response_timer_obj.start()
+
+    def turn_off_exposure_stimulus(self):
+        """Turn off exposure stimulus but continue accepting responses"""
+        self.stimulus_offset_time = time.time()
+
         self.visual_stimulus.place_forget()
         if self.arduino_connected:
             self.arduino.haptic_off()
 
+        self.root.update()
+
+    def record_exposure_response(self):
+        """Record the button press response during exposure"""
+        if not self.accepting_responses or self.response_button_pressed:
+            return
+
+        self.response_button_pressed = True
+        self.response_time = time.time()
+        self.reaction_time = self.response_time - self.stimulus_onset_time
+
+        # Stop accepting further responses
+        self.accepting_responses = False
+
+        # Cancel the response window timer
+        if self.response_timer_obj is not None:
+            self.response_timer_obj.cancel()
+            self.response_timer_obj = None
+
+        # Show selection screen immediately
+        self.show_exposure_selection_screen()
+
+    def end_exposure_response_window(self):
+        """Handle when exposure response window ends without button press"""
+        self.accepting_responses = False
+
+        if not self.response_button_pressed:
+            # No response was recorded
+            self.reaction_time = None
+            self.show_exposure_selection_screen()
+
+    def show_exposure_selection_screen(self):
+        """Show the cue selection screen during exposure"""
+        # Hide stimuli
+        self.visual_stimulus.place_forget()
+        if self.arduino_connected:
+            self.arduino.haptic_off()
+
+        # Reset checkboxes
+        self.visual_var.set(0)
+        self.audio_var.set(0)
+        self.haptic_var.set(0)
+
+        # Set selection screen flag
+        self.in_selection_screen = True
+
+        # Show selection frame
+        self.selection_frame.place(relx=0.5, rely=0.5, width=550, height=400, anchor='center')
+
+        # Force UI update to render properly
+        self.root.update_idletasks()
+        self.root.update()
+
+    def handle_selection_continue(self):
+        """Route to appropriate continue handler based on phase"""
+        if self.current_phase == 'stimulus_exposure':
+            self.exposure_selection_continue()
+        elif self.current_phase == 'experiment':
+            self.selection_continue()
+
+    def exposure_selection_continue(self):
+        """Handle continue button on exposure selection screen"""
+        # Clear selection screen flag
+        self.in_selection_screen = False
+
+        # Hide selection screen
+        self.selection_frame.place_forget()
+
+        # Move to next exposure
         self.exposure_index += 1
+
+        # Wait 2 seconds before next exposure
         self.timer_obj = Timer(2.0, self.show_stimulus_exposure)
         self.timer_obj.start()
 
@@ -543,7 +677,7 @@ class SingleButtonReactionApp:
         instructions = (
             "Great! Now you've experienced all three stimulus types.\n\n"
             "In the actual experiment:\n\n"
-            "• Press SPACE BAR as soon as you detect ANY stimulus\n"
+            "• Press KEY 1 as soon as you detect ANY stimulus\n"
             "• Then select which cue(s) you felt\n"
             "• Stimuli may appear alone or in combination\n"
             "• Respond as quickly as possible!\n\n"
@@ -583,7 +717,7 @@ class SingleButtonReactionApp:
         self.visual_stimulus.place_forget()
 
         modes = ['V', 'A', 'H', 'VA', 'VH', 'AH', 'VAH']
-        self.trial_list = modes * 10
+        self.trial_list = modes * 1
         random.shuffle(self.trial_list)
 
         self.current_trial_index = 0
@@ -690,11 +824,21 @@ class SingleButtonReactionApp:
         self.audio_var.set(0)
         self.haptic_var.set(0)
 
+        # Set selection screen flag
+        self.in_selection_screen = True
+
         # Show selection frame
         self.selection_frame.place(relx=0.5, rely=0.5, width=550, height=400, anchor='center')
 
+        # Force UI update to render properly
+        self.root.update_idletasks()
+        self.root.update()
+
     def selection_continue(self):
         """Handle continue button on selection screen"""
+        # Clear selection screen flag
+        self.in_selection_screen = False
+
         # Collect selected cues
         self.selected_cues = []
         if self.visual_var.get():

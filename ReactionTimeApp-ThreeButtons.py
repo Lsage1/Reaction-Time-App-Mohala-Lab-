@@ -45,7 +45,7 @@ class AudioGenerator:
     """Simple audio tone generator using built-in libraries"""
 
     @staticmethod
-    def generate_tone(frequency=440, duration=0.4, sample_rate=44100):
+    def generate_tone(frequency=440, duration=0.5, sample_rate=44100):
         """Generate a WAV file with a sine wave tone"""
         import math
 
@@ -74,7 +74,7 @@ class AudioGenerator:
         return temp_filename
 
     @staticmethod
-    def play_tone(frequency=440, duration=0.4):
+    def play_tone(frequency=440, duration=0.5):
         """Play a tone using platform-specific method"""
         wav_file = AudioGenerator.generate_tone(frequency, duration)
 
