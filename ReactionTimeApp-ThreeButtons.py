@@ -3,6 +3,7 @@
 Reaction Time App - Python Version with PySerial Arduino Support
 WITH INITIAL INSTRUCTIONS, STIMULUS EXPOSURE, AND INTERMEDIATE INSTRUCTIONS
 Measures reaction times to visual, auditory, and haptic stimuli
+MAC-COMPATIBLE VERSION
 """
 
 import tkinter as tk
@@ -112,14 +113,14 @@ class AudioGenerator:
 
 
 class ArduinoController:
-    """Arduino controller using PySerial"""
+    """Arduino controller using PySerial - MAC COMPATIBLE VERSION"""
 
-    def __init__(self, port=None, baud_rate=9600, timeout=1):
+    def __init__(self, port=None, baud_rate=9600, timeout=2):
         self.serial_conn = None
         self.port = port
         self.baud_rate = baud_rate
         self.timeout = timeout
-        self.lock = Lock()  # Thread safety for serial communication
+        self.lock = Lock()
 
     def detect_arduino_port(self):
         """Auto-detect Arduino port"""
@@ -129,14 +130,11 @@ class ArduinoController:
         try:
             ports = serial.tools.list_ports.comports()
 
-            # Look for Arduino-like devices
             for port in ports:
-                # Check for Arduino in description
                 if any(keyword in port.description.lower() for keyword in ['arduino', 'ch340', 'usb serial']):
                     print(f"Found potential Arduino: {port.device} - {port.description}")
                     return port.device
 
-            # If no Arduino found, return first available port
             if len(ports) > 0:
                 print(f"No Arduino detected, using first available port: {ports[0].device}")
                 return ports[0].device
@@ -144,22 +142,15 @@ class ArduinoController:
         except Exception as e:
             print(f"Port detection error: {e}")
 
-        # Default ports by platform
-        if platform.system() == 'Windows':
-            return 'COM3'
-        elif platform.system() == 'Darwin':
-            return '/dev/tty.usbmodem14101'
-        else:
-            return '/dev/ttyACM0'
+        return '/dev/cu.usbserial-110'  # Default for your Mac setup
 
     def connect(self):
-        """Connect to Arduino"""
+        """Connect to Arduino - MAC OPTIMIZED"""
         if not PYSERIAL_AVAILABLE:
             print("PySerial not available. Cannot connect to Arduino.")
             return False
 
         try:
-            # Auto-detect port if not specified
             if self.port is None:
                 self.port = self.detect_arduino_port()
 
@@ -169,29 +160,29 @@ class ArduinoController:
 
             print(f"Attempting to connect to Arduino on {self.port}...")
 
-            # Open serial connection
+            # MAC FIX: Open serial connection with DTR disabled initially
             self.serial_conn = serial.Serial(
                 port=self.port,
                 baudrate=self.baud_rate,
                 timeout=self.timeout,
                 write_timeout=self.timeout,
-                exclusive=True  # Windows exclusive access
+                dsrdtr=False,  # MAC FIX: Disable DTR
+                rtscts=False  # MAC FIX: Disable RTS/CTS
             )
 
-            # Wait for Arduino to initialize (important!)
+            # MAC FIX: Longer wait for Arduino to initialize
             print("Waiting for Arduino to initialize...")
-            time.sleep(3)  # Longer wait for stability
+            time.sleep(4)  # Increased from 3 to 4 seconds
 
-            # Clear any initial data
+            # Clear buffers
             self.serial_conn.reset_input_buffer()
             self.serial_conn.reset_output_buffer()
-
-            # Additional delay for Windows
             time.sleep(0.5)
 
-            # Test connection with status query
+            # Test connection
             print("Testing connection...")
             response = self.send_command('?')
+
             if response and 'READY' in response:
                 print(f"✓ Arduino connected successfully on {self.port}")
                 return True
@@ -209,18 +200,23 @@ class ArduinoController:
             return False
 
     def send_command(self, command):
-        """Send command to Arduino and read response"""
+        """Send command to Arduino and read response - MAC OPTIMIZED"""
         if self.serial_conn is None or not self.serial_conn.is_open:
             return None
 
         with self.lock:
             try:
+                # MAC FIX: Check if port is still valid
+                if not self.serial_conn.is_open:
+                    print("Serial port closed unexpectedly")
+                    return None
+
                 # Send command
                 self.serial_conn.write(command.encode())
                 self.serial_conn.flush()
 
-                # Delay for Arduino to process (critical for Windows)
-                time.sleep(0.1)
+                # MAC FIX: Longer delay for processing
+                time.sleep(0.15)  # Increased from 0.1
 
                 # Read response if available
                 if self.serial_conn.in_waiting > 0:
@@ -229,8 +225,12 @@ class ArduinoController:
 
                 return None
 
-            except serial.SerialException as e:
+            except (serial.SerialException, OSError) as e:
                 print(f"Serial communication error: {e}")
+                # Try to reconnect
+                print("Attempting to reconnect...")
+                self.disconnect()
+                time.sleep(1)
                 return None
             except Exception as e:
                 print(f"Communication error: {e}")
@@ -255,9 +255,8 @@ class ArduinoController:
         """Close serial connection"""
         if self.serial_conn is not None and self.serial_conn.is_open:
             try:
-                # Turn off haptic before disconnecting
                 self.haptic_off()
-                time.sleep(0.1)
+                time.sleep(0.2)
                 self.serial_conn.close()
                 print("Arduino disconnected")
             except Exception as e:
@@ -624,7 +623,7 @@ class ReactionTimeApp:
 
         # Generate trial list
         modes = ['V', 'A', 'H', 'VA', 'VH', 'AH', 'VAH']
-        self.trial_list = modes * 10  # TESTING: 7 trials only (change back to * 10 for real experiment)
+        self.trial_list = modes * 10  # 70 trials total
         random.shuffle(self.trial_list)
 
         self.current_trial_index = 0
