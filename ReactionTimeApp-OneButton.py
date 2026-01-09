@@ -531,7 +531,7 @@ class SingleButtonReactionApp:
             "• Visual (Yellow Rectangle on Screen)\n"
             "• Auditory (Beep Sound)\n"
             "• Haptic (Vibration from Haptic Device)\n\n"
-            "Your task is to press KEY 1 as quickly as possible when you detect ANY cue. Place the index finger of your non dominant on the haptic device, and place the fingers of your dominant hand on the external key buttons.\n\n\n\n"
+            "Your task is to press KEY 1 as quickly as possible when you detect ANY cue. Place the index finger of your non dominant on the haptic device, and place the fingers of your dominant hand on the external key buttons.\n\n\n"
             "After pressing, you'll select which cue(s) you felt.\n\n"
             "Press 1 to see example..."
         )
