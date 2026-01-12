@@ -10,23 +10,23 @@
  * Upload this sketch to your Arduino before running the Python app
  */
 
-const int HAPTIC_PIN = 8;  // Pin connected to haptic motor (via transistor)
+const int HAPTIC_PIN = 13;  // Pin connected to haptic motor (via transistor)
 
 void setup() {
   // Initialize serial communication at 9600 baud
   Serial.begin(9600);
-
+  
   // Set haptic pin as output
   pinMode(HAPTIC_PIN, OUTPUT);
-
+  
   // Ensure motor is off initially
-  digitalWrite(HAPTIC_PIN, LOW);
-
+  digitalWrite(HAPTIC_PIN, HIGH);
+  
   // Wait for serial connection to establish
   while (!Serial) {
-    ;  // Wait for serial port to connect
+    ; // Wait for serial port to connect
   }
-
+  
   // Send ready message
   Serial.println("READY");
 }
@@ -36,30 +36,30 @@ void loop() {
   if (Serial.available() > 0) {
     // Read the incoming byte
     char command = Serial.read();
-
+    
     // Process command
     switch (command) {
       case 'H':  // Turn haptic motor ON (HIGH)
-        digitalWrite(HAPTIC_PIN, HIGH);
+        digitalWrite(HAPTIC_PIN, LOW);
         Serial.println("ON");
         break;
-
+        
       case 'L':  // Turn haptic motor OFF (LOW)
-        digitalWrite(HAPTIC_PIN, LOW);
+        digitalWrite(HAPTIC_PIN, HIGH);
         Serial.println("OFF");
         break;
-
+        
       case 'T':  // Test command - blink motor
-        digitalWrite(HAPTIC_PIN, HIGH);
-        delay(200);
         digitalWrite(HAPTIC_PIN, LOW);
+        delay(200);
+        digitalWrite(HAPTIC_PIN, HIGH);
         Serial.println("TEST_OK");
         break;
-
+        
       case '?':  // Status query
         Serial.println("READY");
         break;
-
+        
       default:
         // Unknown command - send error
         Serial.print("ERROR:UNKNOWN_");
