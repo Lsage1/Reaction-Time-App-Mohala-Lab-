@@ -1,5 +1,5 @@
 # ============================================================================
-# Create Figures - MINIMAL VERSION (No xml2/rvest needed)
+# Create Figures - CORRECTED VERSION (Race model lines properly centered)
 # Works with: dplyr, readr, ggplot2 only
 # ============================================================================
 
@@ -102,16 +102,21 @@ one_summary$Stimulus <- factor(one_summary$Stimulus, levels = c("V", "A", "H", "
 # Add race model predictions
 one_summary <- merge(one_summary, race_predictions, by = "Stimulus", all.x = TRUE)
 
-# Create Figure 1
+# Prepare race model data with proper x positions
+race_model_data_1 <- one_summary[!is.na(one_summary$RaceModel), ]
+race_model_data_1$x_start <- as.numeric(race_model_data_1$Stimulus) - 0.4
+race_model_data_1$x_end <- as.numeric(race_model_data_1$Stimulus) + 0.4
+
+# Create Figure 1 with CORRECTED race model lines
 fig1 <- ggplot(one_summary, aes(x = Stimulus, y = mean_RT, fill = visual_containing)) +
   geom_bar(stat = "identity", color = "black", size = 1.2, alpha = 0.8) +
   geom_errorbar(aes(ymin = mean_RT - sem_RT, ymax = mean_RT + sem_RT),
                 width = 0.3, size = 1) +
-  # Add race model lines for multimodal conditions
-  geom_segment(data = one_summary[!is.na(one_summary$RaceModel), ],
-               aes(x = as.numeric(Stimulus) - 0.4, xend = as.numeric(Stimulus) + 0.4,
-                   y = RaceModel, yend = RaceModel, linetype = "Race Model"),
-               color = "red", size = 1.5) +
+  # Add race model lines for multimodal conditions - PROPERLY CENTERED
+  geom_segment(data = race_model_data_1,
+               aes(x = x_start, xend = x_end, y = RaceModel, yend = RaceModel, linetype = "Race Model"),
+               color = "red", linewidth = 1.5,
+               inherit.aes = FALSE) +
   scale_fill_manual(values = c("Visual" = "#2E86AB", "Non-Visual" = "#A23B72"),
                     name = "",
                     labels = c("Non-Visual" = "Non-Visual Modality", "Visual" = "Visual Modality")) +
@@ -131,8 +136,8 @@ fig1 <- ggplot(one_summary, aes(x = Stimulus, y = mean_RT, fill = visual_contain
     axis.text = element_text(size = 12),
     legend.position = "top",
     axis.line = element_line(color = "black",
-                            linewidth = 0.5,
-                            linetype = 1))
+                             linewidth = 0.5,
+                             linetype = 1))
 
 # Save Figure 1
 ggsave("Figure1_OneButton_MeanRT.png", fig1, width = 10, height = 6, dpi = 300)
@@ -155,15 +160,21 @@ three_summary$visual_containing <- ifelse(grepl("V", three_summary$Stimulus), "V
 three_summary$Stimulus <- factor(three_summary$Stimulus, levels = c("V", "A", "H", "VA", "VH", "AH", "VAH"))
 three_summary <- merge(three_summary, race_predictions_3, by = "Stimulus", all.x = TRUE)
 
-# Create Figure 2
+# Prepare race model data with proper x positions
+race_model_data_3 <- three_summary[!is.na(three_summary$RaceModel), ]
+race_model_data_3$x_start <- as.numeric(race_model_data_3$Stimulus) - 0.4
+race_model_data_3$x_end <- as.numeric(race_model_data_3$Stimulus) + 0.4
+
+# Create Figure 2 with CORRECTED race model lines
 fig2 <- ggplot(three_summary, aes(x = Stimulus, y = mean_RT, fill = visual_containing)) +
   geom_bar(stat = "identity", color = "black", size = 1.2, alpha = 0.8) +
   geom_errorbar(aes(ymin = mean_RT - sem_RT, ymax = mean_RT + sem_RT),
                 width = 0.3, size = 1) +
-  geom_segment(data = three_summary[!is.na(three_summary$RaceModel), ],
-               aes(x = as.numeric(Stimulus) - 0.4, xend = as.numeric(Stimulus) + 0.4,
-                   y = RaceModel, yend = RaceModel, linetype = "Race Model"),
-               color = "red", size = 1.5) +
+  # Add race model lines for multimodal conditions - PROPERLY CENTERED
+  geom_segment(data = race_model_data_3,
+               aes(x = x_start, xend = x_end, y = RaceModel, yend = RaceModel, linetype = "Race Model"),
+               color = "red", linewidth = 1.5,
+               inherit.aes = FALSE) +
   scale_fill_manual(values = c("Visual" = "#2E86AB", "Non-Visual" = "#A23B72"),
                     name = "",
                     labels = c("Non-Visual" = "Non-Visual Modality", "Visual" = "Visual Modality")) +
