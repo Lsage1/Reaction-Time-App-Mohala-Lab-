@@ -243,7 +243,7 @@ fig3 <- ggplot(comparison_one, aes(x = Category, y = mean_RT, fill = Type)) +
   ) +
   theme_classic(base_size = 14) +
   theme(
-    plot.title = element_text(face = "bold", size = 16, hjust = 0.5),
+    plot.title = element_text(face = "bold", size = 18, hjust = 0.5),
     axis.title = element_text(face = "bold"),
     axis.text.x = element_blank(),
     axis.ticks.x = element_blank(),
@@ -304,20 +304,21 @@ fig4 <- ggplot(comparison_three, aes(x = Category, y = mean_RT, fill = Type)) +
                                "Non-Visual-Multimodal" = "Non-Visual Multimodal")) +
   scale_y_continuous(expand = c(0, 0), limits = c(0, 1.5)) +
   labs(
-    title = "Three-Button Task: Visual Dominance Effect",
-    x = "",
-    y = "Reaction Time (seconds)"
+    title = "Three-Button Task: Colavita Visual Dominance Effect",
+    x = "Stimulus Type",
+    y = "Reaction Time (Seconds)"
   ) +
   theme_classic(base_size = 14) +
   theme(
-    plot.title = element_text(face = "bold", size = 16, hjust = 0.5),
+    plot.title = element_text(face = "bold", size = 18, hjust = 0.5),
     axis.title = element_text(face = "bold"),
     axis.text.x = element_blank(),
     axis.ticks.x = element_blank(),
     legend.position = "top",
     legend.title = element_blank(),
-    axis.line = element_line(arrow = arrow(type = "closed", length = unit(0.15, "inches")))
-  )
+    axis.line = element_line(color = "black",
+                             linewidth = 0.5,
+                             linetype = 1))
 
 ggsave("Figure4_ThreeButton_Comparison.png", fig4, width = 12, height = 7, dpi = 300)
 cat("✓ Figure 4 saved: Figure4_ThreeButton_Comparison.png\n")
