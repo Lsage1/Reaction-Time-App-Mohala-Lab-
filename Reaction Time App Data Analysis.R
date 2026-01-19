@@ -244,8 +244,8 @@ fig3 <- ggplot(comparison_one, aes(x = Category, y = mean_RT, fill = Type)) +
                     labels = c("V" = "V",
                                "A" = "A",
                                "H" = "H",
-                               "Visual-Multimodal" = "Visual Multimodal",
-                               "Non-Visual-Multimodal" = "Non-Visual Multimodal")) +
+                               "Visual-Multimodal" = "Visual Multimodal (VA, VH, VAH)",
+                               "Non-Visual-Multimodal" = "Non-Visual Multimodal (AH)")) +
   scale_y_continuous(expand = c(0, 0), limits = c(0, 0.9)) +
   labs(
     title = "One-Button Task: Colavita Visual Dominance Effect",
@@ -308,11 +308,11 @@ fig4 <- ggplot(comparison_three, aes(x = Category, y = mean_RT, fill = Type)) +
                                "H" = "#9C27B0",
                                "Visual-Multimodal" = "#2E86AB",
                                "Non-Visual-Multimodal" = "#A23B72"),
-                    labels = c("V" = "V (Visual)",
-                               "A" = "A (Auditory)",
-                               "H" = "H (Haptic)",
-                               "Visual-Multimodal" = "Visual Multimodal",
-                               "Non-Visual-Multimodal" = "Non-Visual Multimodal")) +
+                    labels = c("V" = "V",
+                               "A" = "A",
+                               "H" = "H",
+                               "Visual-Multimodal" = "Visual Multimodal (VA, VH, VAH)",
+                               "Non-Visual-Multimodal" = "Non-Visual Multimodal (AH)")) +
   scale_y_continuous(expand = c(0, 0), limits = c(0, 1.5)) +
   labs(
     title = "Three-Button Task: Colavita Visual Dominance Effect",
