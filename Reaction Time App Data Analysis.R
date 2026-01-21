@@ -423,16 +423,19 @@ fig1 <- ggplot(one_summary_all, aes(x = Stimulus, y = mean_RT, fill = visual_con
                         labels = c("Race Model Prediction")) +
   scale_y_continuous(expand = c(0, 0), limits = c(0, 1.0)) +
   labs(
-    title = "One-Button Task: Mean Reaction Time (All Trials)",
+    title = "One-Button Task: Mean Reaction Time",
     x = "Stimulus Type",
     y = "Reaction Time (Seconds)"
   ) +
-  theme_classic(base_size = 14) +
+  theme_classic(base_size = 18) +
   theme(
-    plot.title = element_text(face = "bold", size = 18, hjust = 0.5),
-    axis.title = element_text(face = "bold"),
-    axis.text = element_text(size = 12),
+    plot.title = element_text(face = "bold", size = 22, hjust = 0.5),
+    axis.title = element_text(face = "bold", size = 20),
+    axis.text = element_text(size = 18),
+    axis.text.x = element_text(size = 18),
+    axis.text.y = element_text(size = 18),
     legend.position = "top",
+    legend.text = element_text(size = 16),
     axis.line = element_line(color = "black",
                              linewidth = 0.5,
                              linetype = 1))
@@ -469,16 +472,19 @@ fig2 <- ggplot(three_summary_all, aes(x = Stimulus, y = mean_RT, fill = visual_c
                     labels = c("Non-Visual" = "Non-Visual Modality", "Visual" = "Visual Modality")) +
   scale_y_continuous(expand = c(0, 0), limits = c(0, 1.4)) +
   labs(
-    title = "Three-Button Task: Mean Reaction Time (All Trials)",
+    title = "Three-Button Task: Mean Reaction Time",
     x = "Stimulus Type",
     y = "Reaction Time (Seconds)"
   ) +
-  theme_classic(base_size = 14) +
+  theme_classic(base_size = 18) +
   theme(
-    plot.title = element_text(face = "bold", size = 18, hjust = 0.5),
-    axis.title = element_text(face = "bold"),
-    axis.text = element_text(size = 12),
+    plot.title = element_text(face = "bold", size = 22, hjust = 0.5),
+    axis.title = element_text(face = "bold", size = 20),
+    axis.text = element_text(size = 18),
+    axis.text.x = element_text(size = 18),
+    axis.text.y = element_text(size = 18),
     legend.position = "top",
+    legend.text = element_text(size = 16),
     axis.line = element_line(color = "black",
                              linewidth = 0.5,
                              linetype = 1))
@@ -574,7 +580,7 @@ fig3 <- ggplot(confusion_one_complete, aes(x = FeltStimulus, y = Stimulus, fill 
   geom_tile(color = "black", linewidth = 0.5) +
   geom_text(aes(label = sprintf("%.2f", proportion)), 
             color = ifelse(confusion_one_complete$proportion > 0.5, "white", "black"), 
-            size = 5, fontface = "bold") +
+            size = 7, fontface = "bold") +
   scale_fill_gradient(low = "#E8F4F8", high = "#2E86AB", limits = c(0, 1),
                       name = "Proportion") +
   scale_x_discrete(drop = FALSE) +
@@ -584,15 +590,19 @@ fig3 <- ggplot(confusion_one_complete, aes(x = FeltStimulus, y = Stimulus, fill 
     x = "Perceived Stimulus",
     y = "Actual Stimulus"
   ) +
-  theme_minimal(base_size = 14) +
+  theme_minimal(base_size = 18) +
   theme(
-    plot.title = element_text(face = "bold", size = 18, hjust = 0.5),
-    axis.title = element_text(face = "bold"),
-    axis.text = element_text(size = 12),
+    plot.title = element_text(face = "bold", size = 22, hjust = 0.5),
+    axis.title = element_text(face = "bold", size = 20),
+    axis.text = element_text(size = 18),
+    axis.text.x = element_text(size = 18),
+    axis.text.y = element_text(size = 18),
     panel.grid = element_blank(),
     panel.background = element_rect(fill = "white", color = NA),
     plot.background = element_rect(fill = "white", color = NA),
-    legend.position = "right"
+    legend.position = "right",
+    legend.title = element_text(size = 16),
+    legend.text = element_text(size = 14)
   )
 
 ggsave("Figure3_OneButton_ConfusionMatrix.png", fig3, width = 10, height = 8, dpi = 300)
@@ -719,7 +729,7 @@ fig4 <- ggplot(confusion_three_complete, aes(x = FeltStimulus, y = Stimulus, fil
   geom_tile(color = "black", linewidth = 0.5) +
   geom_text(aes(label = sprintf("%.2f", proportion)), 
             color = ifelse(confusion_three_complete$proportion > 0.5, "white", "black"), 
-            size = 5, fontface = "bold") +
+            size = 7, fontface = "bold") +
   scale_fill_gradient(low = "#E8F4F8", high = "#2E86AB", limits = c(0, 1),
                       name = "Proportion") +
   scale_x_discrete(drop = FALSE) +
@@ -729,15 +739,19 @@ fig4 <- ggplot(confusion_three_complete, aes(x = FeltStimulus, y = Stimulus, fil
     x = "Perceived Stimulus",
     y = "Actual Stimulus"
   ) +
-  theme_minimal(base_size = 14) +
+  theme_minimal(base_size = 18) +
   theme(
-    plot.title = element_text(face = "bold", size = 18, hjust = 0.5),
-    axis.title = element_text(face = "bold"),
-    axis.text = element_text(size = 12),
+    plot.title = element_text(face = "bold", size = 22, hjust = 0.5),
+    axis.title = element_text(face = "bold", size = 20),
+    axis.text = element_text(size = 18),
+    axis.text.x = element_text(size = 18),
+    axis.text.y = element_text(size = 18),
     panel.grid = element_blank(),
     panel.background = element_rect(fill = "white", color = NA),
     plot.background = element_rect(fill = "white", color = NA),
-    legend.position = "right"
+    legend.position = "right",
+    legend.title = element_text(size = 16),
+    legend.text = element_text(size = 14)
   )
 
 ggsave("Figure4_ThreeButton_ConfusionMatrix.png", fig4, width = 10, height = 8, dpi = 300)
