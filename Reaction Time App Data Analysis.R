@@ -366,6 +366,28 @@ cat("\n", rep("=", 70), "\n", sep = "")
 cat("CREATING FIGURES\n")
 cat(rep("=", 70), "\n\n", sep = "")
 
+# Function to normalize stimulus order (alphabetical by modality: V, A, H)
+# This is used for confusion matrices to standardize response formats
+normalize_stimulus <- function(stim) {
+  # Handle NA, NULL, or non-character inputs
+  if(is.null(stim) || length(stim) == 0) return(NA_character_)
+  if(is.na(stim)) return(NA_character_)
+  
+  # Convert to character if not already
+  stim <- as.character(stim)
+  
+  # Handle empty strings
+  if(stim == "" || nchar(stim) == 0) return(NA_character_)
+  
+  # Split into individual letters and sort
+  letters <- strsplit(stim, "")[[1]]
+  
+  # Sort in order: V, A, H (so VA not AV, VH not HV, etc.)
+  order_map <- c("V" = 1, "A" = 2, "H" = 3)
+  sorted_letters <- letters[order(sapply(letters, function(x) order_map[x]))]
+  return(paste(sorted_letters, collapse = ""))
+}
+
 # Calculate summary statistics using ALL data (not just correct)
 one_summary_all <- one_button %>%
   group_by(Stimulus) %>%
@@ -386,9 +408,9 @@ race_model_data_1$x_end <- as.numeric(race_model_data_1$Stimulus) + 0.4
 
 # Create Figure 1
 fig1 <- ggplot(one_summary_all, aes(x = Stimulus, y = mean_RT, fill = visual_containing)) +
-  geom_bar(stat = "identity", color = "black", size = 1.2, alpha = 0.8) +
+  geom_bar(stat = "identity", color = "black", linewidth = 1.2, alpha = 0.8) +
   geom_errorbar(aes(ymin = mean_RT - sem_RT, ymax = mean_RT + sem_RT),
-                width = 0.3, size = 1) +
+                width = 0.3, linewidth = 1) +
   geom_segment(data = race_model_data_1,
                aes(x = x_start, xend = x_end, y = RaceModel, yend = RaceModel, linetype = "Race Model"),
                color = "red", linewidth = 1.5,
@@ -401,7 +423,7 @@ fig1 <- ggplot(one_summary_all, aes(x = Stimulus, y = mean_RT, fill = visual_con
                         labels = c("Race Model Prediction")) +
   scale_y_continuous(expand = c(0, 0), limits = c(0, 1.0)) +
   labs(
-    title = "One-Button Task: Mean Reaction Time",
+    title = "One-Button Task: Mean Reaction Time (All Trials)",
     x = "Stimulus Type",
     y = "Reaction Time (Seconds)"
   ) +
@@ -439,15 +461,15 @@ race_model_data_3$x_start <- as.numeric(race_model_data_3$Stimulus) - 0.4
 race_model_data_3$x_end <- as.numeric(race_model_data_3$Stimulus) + 0.4
 
 fig2 <- ggplot(three_summary_all, aes(x = Stimulus, y = mean_RT, fill = visual_containing)) +
-  geom_bar(stat = "identity", color = "black", size = 1.2, alpha = 0.8) +
+  geom_bar(stat = "identity", color = "black", linewidth = 1.2, alpha = 0.8) +
   geom_errorbar(aes(ymin = mean_RT - sem_RT, ymax = mean_RT + sem_RT),
-                width = 0.3, size = 1) +
+                width = 0.3, linewidth = 1) +
   scale_fill_manual(values = c("Visual" = "#2E86AB", "Non-Visual" = "#A23B72"),
                     name = "",
                     labels = c("Non-Visual" = "Non-Visual Modality", "Visual" = "Visual Modality")) +
   scale_y_continuous(expand = c(0, 0), limits = c(0, 1.4)) +
   labs(
-    title = "Three-Button Task: Mean Reaction Time",
+    title = "Three-Button Task: Mean Reaction Time (All Trials)",
     x = "Stimulus Type",
     y = "Reaction Time (Seconds)"
   ) +
@@ -465,8 +487,269 @@ ggsave("Figure2_ThreeButton_MeanRT_AllTrials.png", fig2, width = 10, height = 6,
 cat("✓ Figure 2 saved: Figure2_ThreeButton_MeanRT_AllTrials.png\n")
 
 # ============================================================================
-# FIGURE 3: ONE-BUTTON TASK - ACCURACY PERCENTAGE
+# FIGURE 3: ONE-BUTTON TASK - CONFUSION MATRIX
 # ============================================================================
+
+cat("\n", rep("=", 70), "\n", sep = "")
+cat("CREATING CONFUSION MATRIX FOR ONE-BUTTON TASK\n")
+cat(rep("=", 70), "\n\n", sep = "")
+
+# For one-button task, we want to use SelectedCues (what they selected)
+# BUT we need to normalize the order (e.g., "HV" should become "VH")
+felt_col <- "SelectedCues"
+
+if(!felt_col %in% names(one_button)) {
+  cat("ERROR: SelectedCues column not found!\n")
+  cat("Available columns:\n")
+  print(names(one_button))
+  stop("Cannot create confusion matrix")
+}
+
+# Create a working copy with normalized responses
+one_button_norm <- one_button %>%
+  mutate(NormalizedResponse = sapply(!!sym(felt_col), normalize_stimulus))
+
+cat("Sample of original vs normalized responses:\n")
+sample_data <- one_button_norm %>% 
+  select(Stimulus, !!sym(felt_col), NormalizedResponse) %>%
+  head(30)
+print(sample_data)
+cat("\n")
+
+cat("Frequency table of ORIGINAL responses:\n")
+print(table(one_button_norm[[felt_col]]))
+cat("\n")
+
+cat("Frequency table of NORMALIZED responses:\n")
+print(table(one_button_norm$NormalizedResponse))
+cat("\n")
+
+cat("Cross-tabulation: Actual Stimulus vs Normalized Response:\n")
+print(table(one_button_norm$Stimulus, one_button_norm$NormalizedResponse))
+cat("\n")
+
+# Create confusion matrix for one-button task
+# Rows = Actual Stimulus, Columns = What Participant Selected (normalized)
+confusion_one <- one_button_norm %>%
+  group_by(Stimulus, NormalizedResponse) %>%
+  summarise(count = n(), .groups = 'drop') %>%
+  rename(FeltStimulus = NormalizedResponse)
+
+cat("Confusion matrix raw counts:\n")
+print(confusion_one)
+cat("\n")
+
+# Get totals for each actual stimulus
+totals_one <- one_button_norm %>%
+  group_by(Stimulus) %>%
+  summarise(total = n(), .groups = 'drop')
+
+# Calculate proportions
+confusion_one <- merge(confusion_one, totals_one, by = "Stimulus")
+confusion_one$proportion <- confusion_one$count / confusion_one$total
+
+# Set factor levels for proper ordering - THIS ENSURES ALL LEVELS APPEAR
+all_levels <- c("V", "A", "H", "VA", "VH", "AH", "VAH")
+confusion_one$Stimulus <- factor(confusion_one$Stimulus, levels = all_levels)
+confusion_one$FeltStimulus <- factor(confusion_one$FeltStimulus, levels = all_levels)
+
+# Create a complete grid of all combinations (including missing ones with 0)
+complete_grid <- expand.grid(
+  Stimulus = factor(all_levels, levels = all_levels),
+  FeltStimulus = factor(all_levels, levels = all_levels)
+)
+
+# Merge with actual data, filling missing combinations with 0
+confusion_one_complete <- merge(complete_grid, confusion_one, 
+                                by = c("Stimulus", "FeltStimulus"), all.x = TRUE)
+confusion_one_complete$proportion[is.na(confusion_one_complete$proportion)] <- 0
+
+cat("Confusion matrix with proportions (diagonal should be high):\n")
+diagonal <- confusion_one_complete[confusion_one_complete$Stimulus == confusion_one_complete$FeltStimulus, ]
+print(diagonal)
+cat("\n")
+
+# Create confusion matrix heatmap
+fig3 <- ggplot(confusion_one_complete, aes(x = FeltStimulus, y = Stimulus, fill = proportion)) +
+  geom_tile(color = "black", linewidth = 0.5) +
+  geom_text(aes(label = sprintf("%.2f", proportion)), 
+            color = ifelse(confusion_one_complete$proportion > 0.5, "white", "black"), 
+            size = 5, fontface = "bold") +
+  scale_fill_gradient(low = "#E8F4F8", high = "#2E86AB", limits = c(0, 1),
+                      name = "Proportion") +
+  scale_x_discrete(drop = FALSE) +
+  scale_y_discrete(drop = FALSE) +
+  labs(
+    title = "One-Button Task: Confusion Matrix",
+    x = "Perceived Stimulus",
+    y = "Actual Stimulus"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.title = element_text(face = "bold", size = 18, hjust = 0.5),
+    axis.title = element_text(face = "bold"),
+    axis.text = element_text(size = 12),
+    panel.grid = element_blank(),
+    panel.background = element_rect(fill = "white", color = NA),
+    plot.background = element_rect(fill = "white", color = NA),
+    legend.position = "right"
+  )
+
+ggsave("Figure3_OneButton_ConfusionMatrix.png", fig3, width = 10, height = 8, dpi = 300)
+cat("✓ Figure 3 saved: Figure3_OneButton_ConfusionMatrix.png\n")
+
+# ============================================================================
+# FIGURE 4: THREE-BUTTON TASK - CONFUSION MATRIX
+# ============================================================================
+
+cat("\n", rep("=", 70), "\n", sep = "")
+cat("CREATING CONFUSION MATRIX FOR THREE-BUTTON TASK\n")
+cat(rep("=", 70), "\n\n", sep = "")
+
+# For three-button task, use KeysPressed (what they selected)
+felt_col_3 <- "KeysPressed"
+
+if(!felt_col_3 %in% names(three_button)) {
+  cat("ERROR: KeysPressed column not found!\n")
+  cat("Available columns:\n")
+  print(names(three_button))
+  stop("Cannot create confusion matrix")
+}
+
+# Check for NA or empty values
+cat("Checking KeysPressed column...\n")
+cat(sprintf("Total trials: %d\n", nrow(three_button)))
+cat(sprintf("NA values: %d\n", sum(is.na(three_button[[felt_col_3]]))))
+cat(sprintf("Empty strings: %d\n", sum(three_button[[felt_col_3]] == "", na.rm = TRUE)))
+
+# Show what types of values we have
+cat("\nData type of KeysPressed column:\n")
+cat(class(three_button[[felt_col_3]]), "\n")
+
+cat("\nFirst 20 values in KeysPressed:\n")
+print(head(three_button[[felt_col_3]], 20))
+cat("\n")
+
+# Function to map numeric keys to stimulus letters
+# 1 = V, 2 = A, 3 = H
+map_keys_to_stimulus <- function(key_num) {
+  if(is.na(key_num)) return(NA_character_)
+  
+  key_str <- as.character(key_num)
+  
+  # Replace each digit with its corresponding letter
+  key_str <- gsub("1", "V", key_str)
+  key_str <- gsub("2", "A", key_str)
+  key_str <- gsub("3", "H", key_str)
+  
+  return(key_str)
+}
+
+# Create a working copy, converting KeysPressed to stimulus format
+three_button_norm <- three_button %>%
+  filter(!is.na(!!sym(felt_col_3))) %>%
+  mutate(
+    KeysPressed_mapped = sapply(!!sym(felt_col_3), map_keys_to_stimulus),
+    NormalizedResponse = sapply(KeysPressed_mapped, normalize_stimulus)
+  )
+
+cat(sprintf("After filtering, %d trials remain\n\n", nrow(three_button_norm)))
+
+cat("Mapping verification (numeric -> letters):\n")
+sample_mapping <- three_button_norm %>%
+  select(Stimulus, !!sym(felt_col_3), KeysPressed_mapped, NormalizedResponse) %>%
+  head(30)
+print(sample_mapping)
+cat("\n")
+
+cat("Frequency table of MAPPED responses (after 1->V, 2->A, 3->H):\n")
+print(table(three_button_norm$KeysPressed_mapped))
+cat("\n")
+
+cat("Frequency table of NORMALIZED responses:\n")
+print(table(three_button_norm$NormalizedResponse))
+cat("\n")
+
+cat("Cross-tabulation: Actual Stimulus vs Normalized Response:\n")
+print(table(three_button_norm$Stimulus, three_button_norm$NormalizedResponse))
+cat("\n")
+
+# Create confusion matrix for three-button task
+confusion_three <- three_button_norm %>%
+  group_by(Stimulus, NormalizedResponse) %>%
+  summarise(count = n(), .groups = 'drop') %>%
+  rename(FeltStimulus = NormalizedResponse)
+
+cat("Confusion matrix raw counts:\n")
+print(confusion_three)
+cat("\n")
+
+# Get totals for each actual stimulus (from filtered data)
+totals_three <- three_button_norm %>%
+  group_by(Stimulus) %>%
+  summarise(total = n(), .groups = 'drop')
+
+# Calculate proportions
+confusion_three <- merge(confusion_three, totals_three, by = "Stimulus")
+confusion_three$proportion <- confusion_three$count / confusion_three$total
+
+# Set factor levels for proper ordering - THIS ENSURES ALL LEVELS APPEAR
+all_levels <- c("V", "A", "H", "VA", "VH", "AH", "VAH")
+confusion_three$Stimulus <- factor(confusion_three$Stimulus, levels = all_levels)
+confusion_three$FeltStimulus <- factor(confusion_three$FeltStimulus, levels = all_levels)
+
+# Create a complete grid of all combinations (including missing ones with 0)
+complete_grid_3 <- expand.grid(
+  Stimulus = factor(all_levels, levels = all_levels),
+  FeltStimulus = factor(all_levels, levels = all_levels)
+)
+
+# Merge with actual data, filling missing combinations with 0
+confusion_three_complete <- merge(complete_grid_3, confusion_three, 
+                                  by = c("Stimulus", "FeltStimulus"), all.x = TRUE)
+confusion_three_complete$proportion[is.na(confusion_three_complete$proportion)] <- 0
+
+cat("Confusion matrix with proportions (diagonal should be high):\n")
+diagonal <- confusion_three_complete[confusion_three_complete$Stimulus == confusion_three_complete$FeltStimulus, ]
+print(diagonal)
+cat("\n")
+
+# Create confusion matrix heatmap
+fig4 <- ggplot(confusion_three_complete, aes(x = FeltStimulus, y = Stimulus, fill = proportion)) +
+  geom_tile(color = "black", linewidth = 0.5) +
+  geom_text(aes(label = sprintf("%.2f", proportion)), 
+            color = ifelse(confusion_three_complete$proportion > 0.5, "white", "black"), 
+            size = 5, fontface = "bold") +
+  scale_fill_gradient(low = "#E8F4F8", high = "#2E86AB", limits = c(0, 1),
+                      name = "Proportion") +
+  scale_x_discrete(drop = FALSE) +
+  scale_y_discrete(drop = FALSE) +
+  labs(
+    title = "Three-Button Task: Confusion Matrix",
+    x = "Perceived Stimulus",
+    y = "Actual Stimulus"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.title = element_text(face = "bold", size = 18, hjust = 0.5),
+    axis.title = element_text(face = "bold"),
+    axis.text = element_text(size = 12),
+    panel.grid = element_blank(),
+    panel.background = element_rect(fill = "white", color = NA),
+    plot.background = element_rect(fill = "white", color = NA),
+    legend.position = "right"
+  )
+
+ggsave("Figure4_ThreeButton_ConfusionMatrix.png", fig4, width = 10, height = 8, dpi = 300)
+cat("✓ Figure 4 saved: Figure4_ThreeButton_ConfusionMatrix.png\n")
+
+# ============================================================================
+# PRINT ACCURACY STATISTICS
+# ============================================================================
+
+cat("\n", rep("=", 70), "\n", sep = "")
+cat("ACCURACY STATISTICS\n")
+cat(rep("=", 70), "\n\n", sep = "")
 
 # Calculate accuracy for one-button task
 one_accuracy <- one_button %>%
@@ -478,36 +761,8 @@ one_accuracy <- one_button %>%
     .groups = 'drop'
   )
 
-one_accuracy$visual_containing <- ifelse(grepl("V", one_accuracy$Stimulus), "Visual", "Non-Visual")
-one_accuracy$Stimulus <- factor(one_accuracy$Stimulus, levels = c("V", "A", "H", "VA", "VH", "AH", "VAH"))
-
-fig3 <- ggplot(one_accuracy, aes(x = Stimulus, y = accuracy_pct, fill = visual_containing)) +
-  geom_bar(stat = "identity", color = "black", size = 1.2, alpha = 0.8) +
-  scale_fill_manual(values = c("Visual" = "#2E86AB", "Non-Visual" = "#A23B72"),
-                    name = "",
-                    labels = c("Non-Visual" = "Non-Visual Modality", "Visual" = "Visual Modality")) +
-  scale_y_continuous(expand = c(0, 0), limits = c(0, 100)) +
-  labs(
-    title = "One-Button Task: Accuracy by Stimulus Type",
-    x = "Stimulus Type",
-    y = "Accuracy (%)"
-  ) +
-  theme_classic(base_size = 14) +
-  theme(
-    plot.title = element_text(face = "bold", size = 18, hjust = 0.5),
-    axis.title = element_text(face = "bold"),
-    axis.text = element_text(size = 12),
-    legend.position = "top",
-    axis.line = element_line(color = "black",
-                             linewidth = 0.5,
-                             linetype = 1))
-
-ggsave("Figure3_OneButton_Accuracy.png", fig3, width = 10, height = 6, dpi = 300)
-cat("✓ Figure 3 saved: Figure3_OneButton_Accuracy.png\n")
-
-# ============================================================================
-# FIGURE 4: THREE-BUTTON TASK - ACCURACY PERCENTAGE
-# ============================================================================
+cat("ONE-BUTTON TASK ACCURACY:\n")
+print(one_accuracy)
 
 # Calculate accuracy for three-button task
 three_accuracy <- three_button %>%
@@ -518,44 +773,6 @@ three_accuracy <- three_button %>%
     accuracy_pct = (correct_trials / total_trials) * 100,
     .groups = 'drop'
   )
-
-three_accuracy$visual_containing <- ifelse(grepl("V", three_accuracy$Stimulus), "Visual", "Non-Visual")
-three_accuracy$Stimulus <- factor(three_accuracy$Stimulus, levels = c("V", "A", "H", "VA", "VH", "AH", "VAH"))
-
-fig4 <- ggplot(three_accuracy, aes(x = Stimulus, y = accuracy_pct, fill = visual_containing)) +
-  geom_bar(stat = "identity", color = "black", size = 1.2, alpha = 0.8) +
-  scale_fill_manual(values = c("Visual" = "#2E86AB", "Non-Visual" = "#A23B72"),
-                    name = "",
-                    labels = c("Non-Visual" = "Non-Visual Modality", "Visual" = "Visual Modality")) +
-  scale_y_continuous(expand = c(0, 0), limits = c(0, 100)) +
-  labs(
-    title = "Three-Button Task: Accuracy by Stimulus Type",
-    x = "Stimulus Type",
-    y = "Accuracy (%)"
-  ) +
-  theme_classic(base_size = 14) +
-  theme(
-    plot.title = element_text(face = "bold", size = 18, hjust = 0.5),
-    axis.title = element_text(face = "bold"),
-    axis.text = element_text(size = 12),
-    legend.position = "top",
-    axis.line = element_line(color = "black",
-                             linewidth = 0.5,
-                             linetype = 1))
-
-ggsave("Figure4_ThreeButton_Accuracy.png", fig4, width = 10, height = 6, dpi = 300)
-cat("✓ Figure 4 saved: Figure4_ThreeButton_Accuracy.png\n")
-
-# ============================================================================
-# PRINT ACCURACY STATISTICS
-# ============================================================================
-
-cat("\n", rep("=", 70), "\n", sep = "")
-cat("ACCURACY STATISTICS\n")
-cat(rep("=", 70), "\n\n", sep = "")
-
-cat("ONE-BUTTON TASK ACCURACY:\n")
-print(one_accuracy)
 
 cat("\nTHREE-BUTTON TASK ACCURACY:\n")
 print(three_accuracy)
@@ -590,5 +807,5 @@ cat("=== ALL FIGURES AND STATISTICS COMPLETED ===\n")
 cat("\nFigures created:\n")
 cat("  - Figure 1: One-Button Mean RT (All Trials)\n")
 cat("  - Figure 2: Three-Button Mean RT (All Trials)\n")
-cat("  - Figure 3: One-Button Accuracy\n")
-cat("  - Figure 4: Three-Button Accuracy\n")
+cat("  - Figure 3: One-Button Confusion Matrix\n")
+cat("  - Figure 4: Three-Button Confusion Matrix\n")
