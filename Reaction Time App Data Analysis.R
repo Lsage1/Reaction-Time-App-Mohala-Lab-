@@ -1,6 +1,8 @@
 # ============================================================================
-# Create Figures with Statistical Tests - FINAL VERSION
-# Includes t-tests, p-values, and race model analysis
+# Create Figures with Statistical Tests - UPDATED VERSION
+# Changes:
+# - Figures 1 & 2: Use ALL data points (not just correct)
+# - Figures 3 & 4: NEW accuracy percentage figures
 # ============================================================================
 
 # Load libraries
@@ -29,11 +31,13 @@ three_button_3 <- read_csv("three_button_reaction_data_3.csv")
 one_button <- bind_rows(one_button_1, one_button_2, one_button_3)
 three_button <- bind_rows(three_button_1, three_button_2, three_button_3)
 
-# Filter for correct responses only
+# Filter for correct responses only (for statistical tests)
 one_correct <- one_button[one_button$FeltCorrectly == "YES", ]
 three_correct <- three_button[three_button$FeltCorrectly == "YES", ]
 
+cat("One-button total trials:", nrow(one_button), "\n")
 cat("One-button correct trials:", nrow(one_correct), "\n")
+cat("Three-button total trials:", nrow(three_button), "\n")
 cat("Three-button correct trials:", nrow(three_correct), "\n")
 
 # ============================================================================
@@ -44,7 +48,7 @@ cat("\n", rep("=", 70), "\n", sep = "")
 cat("RACE MODEL ANALYSIS - ONE-BUTTON TASK\n")
 cat(rep("=", 70), "\n\n", sep = "")
 
-# Get unimodal mean RTs (one-button task)
+# Get unimodal mean RTs (one-button task - CORRECT ONLY for race model)
 V_mean <- mean(one_correct$ReactionTime_seconds[one_correct$Stimulus == "V"])
 A_mean <- mean(one_correct$ReactionTime_seconds[one_correct$Stimulus == "A"])
 H_mean <- mean(one_correct$ReactionTime_seconds[one_correct$Stimulus == "H"])
@@ -355,29 +359,33 @@ cat("\n")
 cat(sprintf("  Cohen's d = %.2f\n", colavita_d_3))
 
 # ============================================================================
-# CREATE FIGURES (same as before, now with statistical backing)
+# FIGURE 1: ONE-BUTTON TASK - MEAN RT (ALL DATA POINTS)
 # ============================================================================
 
-# Calculate summary statistics for figures
-one_summary <- one_correct %>%
+cat("\n", rep("=", 70), "\n", sep = "")
+cat("CREATING FIGURES\n")
+cat(rep("=", 70), "\n\n", sep = "")
+
+# Calculate summary statistics using ALL data (not just correct)
+one_summary_all <- one_button %>%
   group_by(Stimulus) %>%
   summarise(
-    mean_RT = mean(ReactionTime_seconds),
-    sem_RT = sd(ReactionTime_seconds) / sqrt(n()),
+    mean_RT = mean(ReactionTime_seconds, na.rm = TRUE),
+    sem_RT = sd(ReactionTime_seconds, na.rm = TRUE) / sqrt(n()),
     .groups = 'drop'
   )
 
-one_summary$visual_containing <- ifelse(grepl("V", one_summary$Stimulus), "Visual", "Non-Visual")
-one_summary$Stimulus <- factor(one_summary$Stimulus, levels = c("V", "A", "H", "VA", "VH", "AH", "VAH"))
-one_summary <- merge(one_summary, race_predictions, by = "Stimulus", all.x = TRUE)
+one_summary_all$visual_containing <- ifelse(grepl("V", one_summary_all$Stimulus), "Visual", "Non-Visual")
+one_summary_all$Stimulus <- factor(one_summary_all$Stimulus, levels = c("V", "A", "H", "VA", "VH", "AH", "VAH"))
+one_summary_all <- merge(one_summary_all, race_predictions, by = "Stimulus", all.x = TRUE)
 
 # Prepare race model data with proper x positions
-race_model_data_1 <- one_summary[!is.na(one_summary$RaceModel), ]
+race_model_data_1 <- one_summary_all[!is.na(one_summary_all$RaceModel), ]
 race_model_data_1$x_start <- as.numeric(race_model_data_1$Stimulus) - 0.4
 race_model_data_1$x_end <- as.numeric(race_model_data_1$Stimulus) + 0.4
 
 # Create Figure 1
-fig1 <- ggplot(one_summary, aes(x = Stimulus, y = mean_RT, fill = visual_containing)) +
+fig1 <- ggplot(one_summary_all, aes(x = Stimulus, y = mean_RT, fill = visual_containing)) +
   geom_bar(stat = "identity", color = "black", size = 1.2, alpha = 0.8) +
   geom_errorbar(aes(ymin = mean_RT - sem_RT, ymax = mean_RT + sem_RT),
                 width = 0.3, size = 1) +
@@ -407,11 +415,14 @@ fig1 <- ggplot(one_summary, aes(x = Stimulus, y = mean_RT, fill = visual_contain
                              linewidth = 0.5,
                              linetype = 1))
 
-ggsave("Figure1_OneButton_MeanRT.png", fig1, width = 10, height = 6, dpi = 300)
-cat("\n✓ Figure 1 saved: Figure1_OneButton_MeanRT.png\n")
+ggsave("Figure1_OneButton_MeanRT_AllTrials.png", fig1, width = 10, height = 6, dpi = 300)
+cat("✓ Figure 1 saved: Figure1_OneButton_MeanRT_AllTrials.png\n")
 
-# Figure 2 - Three-Button Task
-three_summary <- three_correct %>%
+# ============================================================================
+# FIGURE 2: THREE-BUTTON TASK - MEAN RT (ALL DATA POINTS)
+# ============================================================================
+
+three_summary_all <- three_button %>%
   group_by(Stimulus) %>%
   summarise(
     mean_RT = mean(RT1_seconds, na.rm = TRUE),
@@ -419,28 +430,21 @@ three_summary <- three_correct %>%
     .groups = 'drop'
   )
 
-three_summary$visual_containing <- ifelse(grepl("V", three_summary$Stimulus), "Visual", "Non-Visual")
-three_summary$Stimulus <- factor(three_summary$Stimulus, levels = c("V", "A", "H", "VA", "VH", "AH", "VAH"))
-three_summary <- merge(three_summary, race_predictions_3, by = "Stimulus", all.x = TRUE)
+three_summary_all$visual_containing <- ifelse(grepl("V", three_summary_all$Stimulus), "Visual", "Non-Visual")
+three_summary_all$Stimulus <- factor(three_summary_all$Stimulus, levels = c("V", "A", "H", "VA", "VH", "AH", "VAH"))
+three_summary_all <- merge(three_summary_all, race_predictions_3, by = "Stimulus", all.x = TRUE)
 
-race_model_data_3 <- three_summary[!is.na(three_summary$RaceModel), ]
+race_model_data_3 <- three_summary_all[!is.na(three_summary_all$RaceModel), ]
 race_model_data_3$x_start <- as.numeric(race_model_data_3$Stimulus) - 0.4
 race_model_data_3$x_end <- as.numeric(race_model_data_3$Stimulus) + 0.4
 
-fig2 <- ggplot(three_summary, aes(x = Stimulus, y = mean_RT, fill = visual_containing)) +
+fig2 <- ggplot(three_summary_all, aes(x = Stimulus, y = mean_RT, fill = visual_containing)) +
   geom_bar(stat = "identity", color = "black", size = 1.2, alpha = 0.8) +
   geom_errorbar(aes(ymin = mean_RT - sem_RT, ymax = mean_RT + sem_RT),
                 width = 0.3, size = 1) +
-  geom_segment(data = race_model_data_3,
-               aes(x = x_start, xend = x_end, y = RaceModel, yend = RaceModel, linetype = "Race Model"),
-               color = "red", linewidth = 1.5,
-               inherit.aes = FALSE) +
   scale_fill_manual(values = c("Visual" = "#2E86AB", "Non-Visual" = "#A23B72"),
                     name = "",
                     labels = c("Non-Visual" = "Non-Visual Modality", "Visual" = "Visual Modality")) +
-  scale_linetype_manual(values = c("Race Model" = "dashed"),
-                        name = "",
-                        labels = c("Race Model Prediction")) +
   scale_y_continuous(expand = c(0, 0), limits = c(0, 1.4)) +
   labs(
     title = "Three-Button Task: Mean Reaction Time",
@@ -457,126 +461,107 @@ fig2 <- ggplot(three_summary, aes(x = Stimulus, y = mean_RT, fill = visual_conta
                              linewidth = 0.5,
                              linetype = 1))
 
-ggsave("Figure2_ThreeButton_MeanRT.png", fig2, width = 10, height = 6, dpi = 300)
-cat("✓ Figure 2 saved: Figure2_ThreeButton_MeanRT.png\n")
-
-# [Continue with Figures 3 and 4 - keeping the same code as before]
-# (Keeping rest of the figure code identical to save space)
-
-# Figure 3 - One-Button Comparison
-vis_multi_mean <- mean(vis_multi_rt)
-vis_multi_sem <- sd(vis_multi_rt) / sqrt(length(vis_multi_rt))
-nonvis_multi_mean <- mean(nonvis_multi_rt)
-nonvis_multi_sem <- sd(nonvis_multi_rt) / sqrt(length(nonvis_multi_rt))
-
-comparison_one <- data.frame(
-  Category = factor(c("V", "A", "H", "Visual\nMultimodal", "Non-Visual\nMultimodal"),
-                    levels = c("V", "A", "H", "Visual\nMultimodal", "Non-Visual\nMultimodal")),
-  mean_RT = c(V_mean, A_mean, H_mean, vis_multi_mean, nonvis_multi_mean),
-  sem_RT = c(
-    sd(one_correct$ReactionTime_seconds[one_correct$Stimulus == "V"]) / sqrt(sum(one_correct$Stimulus == "V")),
-    sd(one_correct$ReactionTime_seconds[one_correct$Stimulus == "A"]) / sqrt(sum(one_correct$Stimulus == "A")),
-    sd(one_correct$ReactionTime_seconds[one_correct$Stimulus == "H"]) / sqrt(sum(one_correct$Stimulus == "H")),
-    vis_multi_sem,
-    nonvis_multi_sem
-  ),
-  Type = factor(c("V", "A", "H", "Visual-Multimodal", "Non-Visual-Multimodal"),
-                levels = c("V", "A", "H", "Visual-Multimodal", "Non-Visual-Multimodal"))
-)
-
-fig3 <- ggplot(comparison_one, aes(x = Category, y = mean_RT, fill = Type)) +
-  geom_bar(stat = "identity", color = "black", size = 1.2, alpha = 0.8) +
-  geom_errorbar(aes(ymin = mean_RT - sem_RT, ymax = mean_RT + sem_RT),
-                width = 0.3, size = 1) +
-  scale_fill_manual(values = c("V" = "#4CAF50",
-                               "A" = "#FF9800", 
-                               "H" = "#9C27B0",
-                               "Visual-Multimodal" = "#2E86AB",
-                               "Non-Visual-Multimodal" = "#A23B72"),
-                    labels = c("V" = "V",
-                               "A" = "A",
-                               "H" = "H",
-                               "Visual-Multimodal" = "Visual Multimodal (VA, VH, VAH)",
-                               "Non-Visual-Multimodal" = "Non-Visual Multimodal (AH)")) +
-  scale_y_continuous(expand = c(0, 0), limits = c(0, 0.9)) +
-  labs(
-    title = "One-Button Task: Colavita Visual Dominance Effect",
-    x = "Stimulus Type",
-    y = "Reaction Time (Seconds)"
-  ) +
-  theme_classic(base_size = 14) +
-  theme(
-    plot.title = element_text(face = "bold", size = 18, hjust = 0.5),
-    axis.title = element_text(face = "bold"),
-    axis.text.x = element_blank(),
-    axis.ticks.x = element_blank(),
-    legend.position = "top",
-    legend.title = element_blank(),
-    axis.line = element_line(color = "black",
-                             linewidth = 0.5,
-                             linetype = 1))
-
-ggsave("Figure3_OneButton_Comparison.png", fig3, width = 12, height = 7, dpi = 300)
-cat("✓ Figure 3 saved: Figure3_OneButton_Comparison.png\n")
-
-# Figure 4 - Three-Button Comparison
-vis_multi_mean_3 <- mean(vis_multi_rt_3)
-vis_multi_sem_3 <- sd(vis_multi_rt_3) / sqrt(length(vis_multi_rt_3))
-nonvis_multi_mean_3 <- mean(nonvis_multi_rt_3)
-nonvis_multi_sem_3 <- sd(nonvis_multi_rt_3) / sqrt(length(nonvis_multi_rt_3))
-
-comparison_three <- data.frame(
-  Category = factor(c("V", "A", "H", "Visual\nMultimodal", "Non-Visual\nMultimodal"),
-                    levels = c("V", "A", "H", "Visual\nMultimodal", "Non-Visual\nMultimodal")),
-  mean_RT = c(V_mean_3, A_mean_3, H_mean_3, vis_multi_mean_3, nonvis_multi_mean_3),
-  sem_RT = c(
-    sd(three_correct$RT1_seconds[three_correct$Stimulus == "V"], na.rm = TRUE) / sqrt(sum(three_correct$Stimulus == "V")),
-    sd(three_correct$RT1_seconds[three_correct$Stimulus == "A"], na.rm = TRUE) / sqrt(sum(three_correct$Stimulus == "A")),
-    sd(three_correct$RT1_seconds[three_correct$Stimulus == "H"], na.rm = TRUE) / sqrt(sum(three_correct$Stimulus == "H")),
-    vis_multi_sem_3,
-    nonvis_multi_sem_3
-  ),
-  Type = factor(c("V", "A", "H", "Visual-Multimodal", "Non-Visual-Multimodal"),
-                levels = c("V", "A", "H", "Visual-Multimodal", "Non-Visual-Multimodal"))
-)
-
-fig4 <- ggplot(comparison_three, aes(x = Category, y = mean_RT, fill = Type)) +
-  geom_bar(stat = "identity", color = "black", size = 1.2, alpha = 0.8) +
-  geom_errorbar(aes(ymin = mean_RT - sem_RT, ymax = mean_RT + sem_RT),
-                width = 0.3, size = 1) +
-  scale_fill_manual(values = c("V" = "#4CAF50",
-                               "A" = "#FF9800", 
-                               "H" = "#9C27B0",
-                               "Visual-Multimodal" = "#2E86AB",
-                               "Non-Visual-Multimodal" = "#A23B72"),
-                    labels = c("V" = "V",
-                               "A" = "A",
-                               "H" = "H",
-                               "Visual-Multimodal" = "Visual Multimodal (VA, VH, VAH)",
-                               "Non-Visual-Multimodal" = "Non-Visual Multimodal (AH)")) +
-  scale_y_continuous(expand = c(0, 0), limits = c(0, 1.5)) +
-  labs(
-    title = "Three-Button Task: Colavita Visual Dominance Effect",
-    x = "Stimulus Type",
-    y = "Reaction Time (Seconds)"
-  ) +
-  theme_classic(base_size = 14) +
-  theme(
-    plot.title = element_text(face = "bold", size = 18, hjust = 0.5),
-    axis.title = element_text(face = "bold"),
-    axis.text.x = element_blank(),
-    axis.ticks.x = element_blank(),
-    legend.position = "top",
-    legend.title = element_blank(),
-    axis.line = element_line(color = "black",
-                             linewidth = 0.5,
-                             linetype = 1))
-
-ggsave("Figure4_ThreeButton_Comparison.png", fig4, width = 12, height = 7, dpi = 300)
-cat("✓ Figure 4 saved: Figure4_ThreeButton_Comparison.png\n")
+ggsave("Figure2_ThreeButton_MeanRT_AllTrials.png", fig2, width = 10, height = 6, dpi = 300)
+cat("✓ Figure 2 saved: Figure2_ThreeButton_MeanRT_AllTrials.png\n")
 
 # ============================================================================
-# FINAL SUMMARY WITH STATISTICS
+# FIGURE 3: ONE-BUTTON TASK - ACCURACY PERCENTAGE
+# ============================================================================
+
+# Calculate accuracy for one-button task
+one_accuracy <- one_button %>%
+  group_by(Stimulus) %>%
+  summarise(
+    total_trials = n(),
+    correct_trials = sum(FeltCorrectly == "YES"),
+    accuracy_pct = (correct_trials / total_trials) * 100,
+    .groups = 'drop'
+  )
+
+one_accuracy$visual_containing <- ifelse(grepl("V", one_accuracy$Stimulus), "Visual", "Non-Visual")
+one_accuracy$Stimulus <- factor(one_accuracy$Stimulus, levels = c("V", "A", "H", "VA", "VH", "AH", "VAH"))
+
+fig3 <- ggplot(one_accuracy, aes(x = Stimulus, y = accuracy_pct, fill = visual_containing)) +
+  geom_bar(stat = "identity", color = "black", size = 1.2, alpha = 0.8) +
+  scale_fill_manual(values = c("Visual" = "#2E86AB", "Non-Visual" = "#A23B72"),
+                    name = "",
+                    labels = c("Non-Visual" = "Non-Visual Modality", "Visual" = "Visual Modality")) +
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 100)) +
+  labs(
+    title = "One-Button Task: Accuracy by Stimulus Type",
+    x = "Stimulus Type",
+    y = "Accuracy (%)"
+  ) +
+  theme_classic(base_size = 14) +
+  theme(
+    plot.title = element_text(face = "bold", size = 18, hjust = 0.5),
+    axis.title = element_text(face = "bold"),
+    axis.text = element_text(size = 12),
+    legend.position = "top",
+    axis.line = element_line(color = "black",
+                             linewidth = 0.5,
+                             linetype = 1))
+
+ggsave("Figure3_OneButton_Accuracy.png", fig3, width = 10, height = 6, dpi = 300)
+cat("✓ Figure 3 saved: Figure3_OneButton_Accuracy.png\n")
+
+# ============================================================================
+# FIGURE 4: THREE-BUTTON TASK - ACCURACY PERCENTAGE
+# ============================================================================
+
+# Calculate accuracy for three-button task
+three_accuracy <- three_button %>%
+  group_by(Stimulus) %>%
+  summarise(
+    total_trials = n(),
+    correct_trials = sum(FeltCorrectly == "YES"),
+    accuracy_pct = (correct_trials / total_trials) * 100,
+    .groups = 'drop'
+  )
+
+three_accuracy$visual_containing <- ifelse(grepl("V", three_accuracy$Stimulus), "Visual", "Non-Visual")
+three_accuracy$Stimulus <- factor(three_accuracy$Stimulus, levels = c("V", "A", "H", "VA", "VH", "AH", "VAH"))
+
+fig4 <- ggplot(three_accuracy, aes(x = Stimulus, y = accuracy_pct, fill = visual_containing)) +
+  geom_bar(stat = "identity", color = "black", size = 1.2, alpha = 0.8) +
+  scale_fill_manual(values = c("Visual" = "#2E86AB", "Non-Visual" = "#A23B72"),
+                    name = "",
+                    labels = c("Non-Visual" = "Non-Visual Modality", "Visual" = "Visual Modality")) +
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 100)) +
+  labs(
+    title = "Three-Button Task: Accuracy by Stimulus Type",
+    x = "Stimulus Type",
+    y = "Accuracy (%)"
+  ) +
+  theme_classic(base_size = 14) +
+  theme(
+    plot.title = element_text(face = "bold", size = 18, hjust = 0.5),
+    axis.title = element_text(face = "bold"),
+    axis.text = element_text(size = 12),
+    legend.position = "top",
+    axis.line = element_line(color = "black",
+                             linewidth = 0.5,
+                             linetype = 1))
+
+ggsave("Figure4_ThreeButton_Accuracy.png", fig4, width = 10, height = 6, dpi = 300)
+cat("✓ Figure 4 saved: Figure4_ThreeButton_Accuracy.png\n")
+
+# ============================================================================
+# PRINT ACCURACY STATISTICS
+# ============================================================================
+
+cat("\n", rep("=", 70), "\n", sep = "")
+cat("ACCURACY STATISTICS\n")
+cat(rep("=", 70), "\n\n", sep = "")
+
+cat("ONE-BUTTON TASK ACCURACY:\n")
+print(one_accuracy)
+
+cat("\nTHREE-BUTTON TASK ACCURACY:\n")
+print(three_accuracy)
+
+# ============================================================================
+# FINAL SUMMARY
 # ============================================================================
 
 cat("\n", rep("=", 70), "\n", sep = "")
@@ -602,3 +587,8 @@ cat("  3. Visual dominance persists across both tasks (both p < 0.001)\n")
 cat("  4. Three-button task eliminates integration benefits\n\n")
 
 cat("=== ALL FIGURES AND STATISTICS COMPLETED ===\n")
+cat("\nFigures created:\n")
+cat("  - Figure 1: One-Button Mean RT (All Trials)\n")
+cat("  - Figure 2: Three-Button Mean RT (All Trials)\n")
+cat("  - Figure 3: One-Button Accuracy\n")
+cat("  - Figure 4: Three-Button Accuracy\n")
