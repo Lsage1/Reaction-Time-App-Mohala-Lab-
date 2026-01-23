@@ -792,6 +792,22 @@ cat("\nTHREE-BUTTON TASK ACCURACY:\n")
 print(three_accuracy)
 
 # ============================================================================
+# CALCULATE SUMMARY STATISTICS FOR FINAL SUMMARY
+# ============================================================================
+
+# Calculate means and SEMs for visual vs non-visual multimodal (one-button)
+vis_multi_mean <- mean(vis_multi_rt)
+vis_multi_sem <- sd(vis_multi_rt) / sqrt(length(vis_multi_rt))
+nonvis_multi_mean <- mean(nonvis_multi_rt)
+nonvis_multi_sem <- sd(nonvis_multi_rt) / sqrt(length(nonvis_multi_rt))
+
+# Calculate means and SEMs for visual vs non-visual multimodal (three-button)
+vis_multi_mean_3 <- mean(vis_multi_rt_3)
+vis_multi_sem_3 <- sd(vis_multi_rt_3) / sqrt(length(vis_multi_rt_3))
+nonvis_multi_mean_3 <- mean(nonvis_multi_rt_3)
+nonvis_multi_sem_3 <- sd(nonvis_multi_rt_3) / sqrt(length(nonvis_multi_rt_3))
+
+# ============================================================================
 # FINAL SUMMARY
 # ============================================================================
 
@@ -823,3 +839,178 @@ cat("  - Figure 1: One-Button Mean RT (All Trials)\n")
 cat("  - Figure 2: Three-Button Mean RT (All Trials)\n")
 cat("  - Figure 3: One-Button Confusion Matrix\n")
 cat("  - Figure 4: Three-Button Confusion Matrix\n")
+
+# ============================================================================
+# ERROR BARS AND STATISTICAL SUMMARY
+# ============================================================================
+
+cat("\n", rep("=", 70), "\n", sep = "")
+cat("ERROR BAR VALUES (Standard Error of Mean)\n")
+cat(rep("=", 70), "\n\n", sep = "")
+
+cat("ONE-BUTTON DETECTION TASK:\n")
+cat(rep("-", 70), "\n", sep = "")
+
+one_summary_table <- one_summary_all %>%
+  left_join(
+    one_button %>%
+      group_by(Stimulus) %>%
+      summarise(
+        sd_RT = sd(ReactionTime_seconds, na.rm = TRUE),
+        .groups = 'drop'
+      ),
+    by = "Stimulus"
+  ) %>%
+  arrange(factor(Stimulus, levels = c("V", "A", "H", "VA", "VH", "AH", "VAH")))
+
+cat("\n")
+cat(sprintf("%-8s %12s %12s %12s %12s\n", "Stimulus", "n", "Mean (s)", "SD (s)", "SEM (s)"))
+cat(rep("-", 70), "\n", sep = "")
+for(i in 1:nrow(one_summary_table)) {
+  row <- one_summary_table[i,]
+  n_trials <- nrow(one_button[one_button$Stimulus == row$Stimulus, ])
+  cat(sprintf("%-8s %12d %12.4f %12.4f %12.4f\n",
+              as.character(row$Stimulus), n_trials, row$mean_RT, row$sd_RT, row$sem_RT))
+}
+
+cat("\n\n")
+cat("THREE-BUTTON IDENTIFICATION TASK:\n")
+cat(rep("-", 70), "\n", sep = "")
+
+three_summary_table <- three_summary_all %>%
+  left_join(
+    three_button %>%
+      group_by(Stimulus) %>%
+      summarise(
+        sd_RT = sd(RT1_seconds, na.rm = TRUE),
+        .groups = 'drop'
+      ),
+    by = "Stimulus"
+  ) %>%
+  arrange(factor(Stimulus, levels = c("V", "A", "H", "VA", "VH", "AH", "VAH")))
+
+cat("\n")
+cat(sprintf("%-8s %12s %12s %12s %12s\n", "Stimulus", "n", "Mean (s)", "SD (s)", "SEM (s)"))
+cat(rep("-", 70), "\n", sep = "")
+for(i in 1:nrow(three_summary_table)) {
+  row <- three_summary_table[i,]
+  n_trials <- nrow(three_button[three_button$Stimulus == row$Stimulus, ])
+  cat(sprintf("%-8s %12d %12.4f %12.4f %12.4f\n",
+              as.character(row$Stimulus), n_trials, row$mean_RT, row$sd_RT, row$sem_RT))
+}
+
+cat("\n\n", rep("=", 70), "\n", sep = "")
+cat("FORMATTED FOR CODE/TABLES\n")
+cat(rep("=", 70), "\n\n", sep = "")
+
+cat("ONE-BUTTON TASK - SEM VALUES:\n")
+cat("------------------------------\n")
+for(i in 1:nrow(one_summary_table)) {
+  row <- one_summary_table[i,]
+  cat(sprintf("%s: %.4f (±%.4f)\n", as.character(row$Stimulus), row$mean_RT, row$sem_RT))
+}
+
+cat("\n")
+cat("THREE-BUTTON TASK - SEM VALUES:\n")
+cat("--------------------------------\n")
+for(i in 1:nrow(three_summary_table)) {
+  row <- three_summary_table[i,]
+  cat(sprintf("%s: %.4f (±%.4f)\n", as.character(row$Stimulus), row$mean_RT, row$sem_RT))
+}
+
+# ============================================================================
+# STATISTICAL TESTS - P-VALUES SUMMARY
+# ============================================================================
+
+cat("\n\n", rep("=", 70), "\n", sep = "")
+cat("STATISTICAL TESTS AND P-VALUES SUMMARY\n")
+cat(rep("=", 70), "\n\n", sep = "")
+
+cat("ONE-BUTTON TASK - RACE MODEL VIOLATIONS:\n")
+cat(rep("-", 70), "\n", sep = "")
+cat("\n")
+
+for (result in results_one_button) {
+  if(!is.na(result$p_value)) {
+    cat(sprintf("%-4s: Obs=%.3fs, Pred=%.3fs, Δ=%+.0fms, t(%.0f)=%.2f, p=%.4f",
+                result$stimulus, result$observed_mean, result$race_pred, 
+                result$violation * 1000, result$df, result$t_stat, result$p_value))
+    
+    if(result$p_value < 0.001) {
+      cat(" ***")
+    } else if(result$p_value < 0.01) {
+      cat(" **")
+    } else if(result$p_value < 0.05) {
+      cat(" *")
+    }
+    cat("\n")
+  }
+}
+
+cat("\n")
+cat("ONE-BUTTON TASK - COLAVITA EFFECT:\n")
+cat(rep("-", 70), "\n", sep = "")
+cat(sprintf("\nVisual multimodal (VA,VH,VAH): M=%.3fs (n=%d)\n", 
+            mean(vis_multi_rt), length(vis_multi_rt)))
+cat(sprintf("Non-visual multimodal (AH):    M=%.3fs (n=%d)\n", 
+            mean(nonvis_multi_rt), length(nonvis_multi_rt)))
+cat(sprintf("Difference: %.0f ms faster for visual\n", difference_ms))
+cat(sprintf("t(%.1f) = %.2f, p = %.4f", 
+            colavita_test$parameter, colavita_test$statistic, colavita_test$p.value))
+
+if(colavita_test$p.value < 0.001) {
+  cat(" ***\n")
+} else if(colavita_test$p.value < 0.01) {
+  cat(" **\n")
+} else if(colavita_test$p.value < 0.05) {
+  cat(" *\n")
+} else {
+  cat("\n")
+}
+
+cat("\n\n")
+cat("THREE-BUTTON TASK - RACE MODEL VIOLATIONS:\n")
+cat(rep("-", 70), "\n", sep = "")
+cat("\n")
+
+for (result in results_three_button) {
+  if(!is.na(result$p_value)) {
+    cat(sprintf("%-4s: Obs=%.3fs, Pred=%.3fs, Δ=%+.0fms, t(%.0f)=%.2f, p=%.4f",
+                result$stimulus, result$observed_mean, result$race_pred, 
+                result$violation * 1000, result$df, result$t_stat, result$p_value))
+    
+    if(result$p_value < 0.001) {
+      cat(" ***")
+    } else if(result$p_value < 0.01) {
+      cat(" **")
+    } else if(result$p_value < 0.05) {
+      cat(" *")
+    }
+    cat("\n")
+  }
+}
+
+cat("\n")
+cat("THREE-BUTTON TASK - COLAVITA EFFECT:\n")
+cat(rep("-", 70), "\n", sep = "")
+cat(sprintf("\nVisual multimodal (VA,VH,VAH): M=%.3fs (n=%d)\n", 
+            mean(vis_multi_rt_3), length(vis_multi_rt_3)))
+cat(sprintf("Non-visual multimodal (AH):    M=%.3fs (n=%d)\n", 
+            mean(nonvis_multi_rt_3), length(nonvis_multi_rt_3)))
+cat(sprintf("Difference: %.0f ms faster for visual\n", difference_ms_3))
+cat(sprintf("t(%.1f) = %.2f, p = %.4f", 
+            colavita_test_3$parameter, colavita_test_3$statistic, colavita_test_3$p.value))
+
+if(colavita_test_3$p.value < 0.001) {
+  cat(" ***\n")
+} else if(colavita_test_3$p.value < 0.01) {
+  cat(" **\n")
+} else if(colavita_test_3$p.value < 0.05) {
+  cat(" *\n")
+} else {
+  cat("\n")
+}
+
+cat("\n", rep("=", 70), "\n", sep = "")
+cat("ALL ANALYSIS COMPLETE\n")
+cat(rep("=", 70), "\n", sep = "")
