@@ -3,6 +3,7 @@
 # Changes:
 # - Figures 1 & 2: Use ALL data points (not just correct)
 # - Figures 3 & 4: NEW accuracy percentage figures
+# - Figures 3 & 4: Axes swapped (x=Actual, y=Perceived) and legends removed
 # ============================================================================
 
 # Load libraries
@@ -575,8 +576,8 @@ diagonal <- confusion_one_complete[confusion_one_complete$Stimulus == confusion_
 print(diagonal)
 cat("\n")
 
-# Create confusion matrix heatmap
-fig3 <- ggplot(confusion_one_complete, aes(x = FeltStimulus, y = Stimulus, fill = proportion)) +
+# Create confusion matrix heatmap - AXES SWAPPED: x=Actual, y=Perceived
+fig3 <- ggplot(confusion_one_complete, aes(x = Stimulus, y = FeltStimulus, fill = proportion)) +
   geom_tile(color = "black", linewidth = 0.5) +
   geom_text(aes(label = sprintf("%.2f", proportion)), 
             color = ifelse(confusion_one_complete$proportion > 0.5, "white", "black"), 
@@ -587,8 +588,8 @@ fig3 <- ggplot(confusion_one_complete, aes(x = FeltStimulus, y = Stimulus, fill 
   scale_y_discrete(drop = FALSE) +
   labs(
     title = "One-Button Task",
-    x = "Perceived Stimulus",
-    y = "Actual Stimulus"
+    x = "Actual Stimulus",
+    y = "Perceived Stimulus"
   ) +
   theme_minimal(base_size = 18) +
   theme(
@@ -600,9 +601,7 @@ fig3 <- ggplot(confusion_one_complete, aes(x = FeltStimulus, y = Stimulus, fill 
     panel.grid = element_blank(),
     panel.background = element_rect(fill = "white", color = NA),
     plot.background = element_rect(fill = "white", color = NA),
-    legend.position = "right",
-    legend.title = element_text(size = 16),
-    legend.text = element_text(size = 14)
+    legend.position = "none"
   )
 
 ggsave("Figure3_OneButton_ConfusionMatrix.png", fig3, width = 10, height = 8, dpi = 300)
@@ -724,8 +723,8 @@ diagonal <- confusion_three_complete[confusion_three_complete$Stimulus == confus
 print(diagonal)
 cat("\n")
 
-# Create confusion matrix heatmap
-fig4 <- ggplot(confusion_three_complete, aes(x = FeltStimulus, y = Stimulus, fill = proportion)) +
+# Create confusion matrix heatmap - AXES SWAPPED: x=Actual, y=Perceived
+fig4 <- ggplot(confusion_three_complete, aes(x = Stimulus, y = FeltStimulus, fill = proportion)) +
   geom_tile(color = "black", linewidth = 0.5) +
   geom_text(aes(label = sprintf("%.2f", proportion)), 
             color = ifelse(confusion_three_complete$proportion > 0.5, "white", "black"), 
@@ -736,8 +735,8 @@ fig4 <- ggplot(confusion_three_complete, aes(x = FeltStimulus, y = Stimulus, fil
   scale_y_discrete(drop = FALSE) +
   labs(
     title = "Three-Button Task",
-    x = "Perceived Stimulus",
-    y = "Actual Stimulus"
+    x = "Actual Stimulus",
+    y = "Perceived Stimulus"
   ) +
   theme_minimal(base_size = 18) +
   theme(
@@ -749,9 +748,7 @@ fig4 <- ggplot(confusion_three_complete, aes(x = FeltStimulus, y = Stimulus, fil
     panel.grid = element_blank(),
     panel.background = element_rect(fill = "white", color = NA),
     plot.background = element_rect(fill = "white", color = NA),
-    legend.position = "right",
-    legend.title = element_text(size = 16),
-    legend.text = element_text(size = 14)
+    legend.position = "none"
   )
 
 ggsave("Figure4_ThreeButton_ConfusionMatrix.png", fig4, width = 10, height = 8, dpi = 300)
@@ -837,8 +834,8 @@ cat("=== ALL FIGURES AND STATISTICS COMPLETED ===\n")
 cat("\nFigures created:\n")
 cat("  - Figure 1: One-Button Mean RT (All Trials)\n")
 cat("  - Figure 2: Three-Button Mean RT (All Trials)\n")
-cat("  - Figure 3: One-Button Confusion Matrix\n")
-cat("  - Figure 4: Three-Button Confusion Matrix\n")
+cat("  - Figure 3: One-Button Confusion Matrix (Actual on x-axis, Perceived on y-axis)\n")
+cat("  - Figure 4: Three-Button Confusion Matrix (Actual on x-axis, Perceived on y-axis)\n")
 
 # ============================================================================
 # ERROR BARS AND STATISTICAL SUMMARY
