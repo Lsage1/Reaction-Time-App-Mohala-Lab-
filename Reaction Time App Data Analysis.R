@@ -417,15 +417,15 @@ fig1 <- ggplot(one_summary_all, aes(x = Stimulus, y = mean_RT, fill = visual_con
                inherit.aes = FALSE) +
   scale_fill_manual(values = c("Visual" = "#2E86AB", "Non-Visual" = "#A23B72"),
                     name = "",
-                    labels = c("Non-Visual" = "Non-Visual Modality", "Visual" = "Visual Modality")) +
+                    labels = c("Non-Visual" = "Non-Visual", "Visual" = "Visual")) +
   scale_linetype_manual(values = c("Race Model" = "dashed"),
                         name = "",
                         labels = c("Race Model Prediction")) +
   scale_y_continuous(expand = c(0, 0), limits = c(0, 1.0)) +
   labs(
-    title = "One-Button Task: Mean Reaction Time",
+    title = "One-Button Task",
     x = "Stimulus Type",
-    y = "Reaction Time (Seconds)"
+    y = "Reaction Time (s)"
   ) +
   theme_classic(base_size = 18) +
   theme(
@@ -469,12 +469,12 @@ fig2 <- ggplot(three_summary_all, aes(x = Stimulus, y = mean_RT, fill = visual_c
                 width = 0.3, linewidth = 1) +
   scale_fill_manual(values = c("Visual" = "#2E86AB", "Non-Visual" = "#A23B72"),
                     name = "",
-                    labels = c("Non-Visual" = "Non-Visual Modality", "Visual" = "Visual Modality")) +
+                    labels = c("Non-Visual" = "Non-Visual", "Visual" = "Visual")) +
   scale_y_continuous(expand = c(0, 0), limits = c(0, 1.4)) +
   labs(
-    title = "Three-Button Task: Mean Reaction Time",
+    title = "Three-Button Task",
     x = "Stimulus Type",
-    y = "Reaction Time (Seconds)"
+    y = "Reaction Time (s)"
   ) +
   theme_classic(base_size = 18) +
   theme(
@@ -586,7 +586,7 @@ fig3 <- ggplot(confusion_one_complete, aes(x = FeltStimulus, y = Stimulus, fill 
   scale_x_discrete(drop = FALSE) +
   scale_y_discrete(drop = FALSE) +
   labs(
-    title = "One-Button Task: Confusion Matrix",
+    title = "One-Button Task",
     x = "Perceived Stimulus",
     y = "Actual Stimulus"
   ) +
@@ -735,7 +735,7 @@ fig4 <- ggplot(confusion_three_complete, aes(x = FeltStimulus, y = Stimulus, fil
   scale_x_discrete(drop = FALSE) +
   scale_y_discrete(drop = FALSE) +
   labs(
-    title = "Three-Button Task: Confusion Matrix",
+    title = "Three-Button Task",
     x = "Perceived Stimulus",
     y = "Actual Stimulus"
   ) +
