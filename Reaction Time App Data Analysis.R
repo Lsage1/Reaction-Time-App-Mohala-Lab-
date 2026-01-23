@@ -3,7 +3,8 @@
 # Major Changes:
 # - ALL means and SEMs calculated from SUBJECT-LEVEL averages (n=3)
 # - ALL t-tests use subject-level data
-# - Figures 1 & 2: Show individual subject dots + mean dots with error bars
+# - Figures 1 & 2: Show individual subject dots + mean dots with ERROR BARS
+# - ERROR BARS NOW MORE VISIBLE (width=0.4, linewidth=1)
 # ============================================================================
 
 # Load libraries
@@ -484,11 +485,11 @@ cat("\n")
 cat(sprintf("  Cohen's d = %.2f\n", colavita_d_3))
 
 # ============================================================================
-# FIGURE 1: ONE-BUTTON TASK with INDIVIDUAL SUBJECT POINTS
+# FIGURE 1: ONE-BUTTON TASK with INDIVIDUAL SUBJECT POINTS AND VISIBLE ERROR BARS
 # ============================================================================
 
 cat("\n", rep("=", 70), "\n", sep = "")
-cat("CREATING FIGURES WITH INDIVIDUAL SUBJECT DATA\n")
+cat("CREATING FIGURES WITH INDIVIDUAL SUBJECT DATA AND VISIBLE ERROR BARS\n")
 cat(rep("=", 70), "\n\n", sep = "")
 
 # Prepare data for plotting
@@ -507,7 +508,7 @@ race_model_data_1 <- one_grand_summary_all[!is.na(one_grand_summary_all$RaceMode
 race_model_data_1$x_start <- as.numeric(race_model_data_1$Stimulus) - 0.4
 race_model_data_1$x_end <- as.numeric(race_model_data_1$Stimulus) + 0.4
 
-# Create Figure 1 with individual points
+# Create Figure 1 with individual points AND VISIBLE ERROR BARS
 fig1 <- ggplot(one_grand_summary_all, aes(x = Stimulus, y = mean_RT)) +
   # Individual subject points (smaller, semi-transparent)
   geom_point(data = one_subject_means_all, 
@@ -520,12 +521,12 @@ fig1 <- ggplot(one_grand_summary_all, aes(x = Stimulus, y = mean_RT)) +
                    linetype = "Race Model"),
                color = "red", linewidth = 1.5,
                inherit.aes = FALSE) +
-  # Mean points (SMALLER, filled)
+  # Mean points (filled)
   geom_point(aes(fill = visual_containing), 
-             size = 4, shape = 21, color = "black", stroke = 1) +
-  # Error bars PLOTTED LAST so they appear on top
+             size = 5, shape = 21, color = "black", stroke = 1.5) +
+  # ERROR BARS - MADE MORE VISIBLE (width=0.4, linewidth=1)
   geom_errorbar(aes(ymin = mean_RT - sem_RT, ymax = mean_RT + sem_RT),
-                width = 0.6, linewidth = 2, color = "black") +
+                width = 0.4, linewidth = 1, color = "black") +
   scale_fill_manual(values = c("Visual" = "#2E86AB", "Non-Visual" = "#A23B72"),
                     name = "",
                     labels = c("Non-Visual" = "Non-Visual", "Visual" = "Visual")) +
@@ -553,7 +554,7 @@ ggsave("Figure1_OneButton_MeanRT_SubjectLevel.png", fig1, width = 10, height = 6
 cat("✓ Figure 1 saved: Figure1_OneButton_MeanRT_SubjectLevel.png\n")
 
 # ============================================================================
-# FIGURE 2: THREE-BUTTON TASK with INDIVIDUAL SUBJECT POINTS
+# FIGURE 2: THREE-BUTTON TASK with INDIVIDUAL SUBJECT POINTS AND VISIBLE ERROR BARS
 # ============================================================================
 
 # Prepare data for plotting
@@ -572,19 +573,19 @@ race_model_data_3 <- three_grand_summary_all[!is.na(three_grand_summary_all$Race
 race_model_data_3$x_start <- as.numeric(race_model_data_3$Stimulus) - 0.4
 race_model_data_3$x_end <- as.numeric(race_model_data_3$Stimulus) + 0.4
 
-# Create Figure 2 with individual points
+# Create Figure 2 with individual points AND VISIBLE ERROR BARS
 fig2 <- ggplot(three_grand_summary_all, aes(x = Stimulus, y = mean_RT)) +
   # Individual subject points (smaller, semi-transparent)
   geom_point(data = three_subject_means_all, 
              aes(x = Stimulus, y = mean_RT),
              size = 3, alpha = 0.6, color = "gray30",
              position = position_jitter(width = 0.1, height = 0, seed = 42)) +
-  # Mean points (SMALLER, filled)
+  # Mean points (filled)
   geom_point(aes(fill = visual_containing), 
-             size = 4, shape = 21, color = "black", stroke = 1) +
-  # Error bars PLOTTED LAST so they appear on top
+             size = 5, shape = 21, color = "black", stroke = 1.5) +
+  # ERROR BARS - MADE MORE VISIBLE (width=0.4, linewidth=1)
   geom_errorbar(aes(ymin = mean_RT - sem_RT, ymax = mean_RT + sem_RT),
-                width = 0.6, linewidth = 2, color = "black") +
+                width = 0.4, linewidth = 1, color = "black") +
   scale_fill_manual(values = c("Visual" = "#2E86AB", "Non-Visual" = "#A23B72"),
                     name = "",
                     labels = c("Non-Visual" = "Non-Visual", "Visual" = "Visual")) +
@@ -899,7 +900,7 @@ cat("=== ALL ANALYSIS COMPLETED WITH SUBJECT-LEVEL STATISTICS ===\n")
 cat("\nKey Changes:\n")
 cat("  1. All means/SEMs calculated from subject averages (n=3)\n")
 cat("  2. All t-tests use subject-level data\n")
-cat("  3. Figures 1 & 2 show individual subject points + means\n")
-cat("  4. Error bars represent SEM across subjects\n")
+cat("  3. Figures 1 & 2 show individual subject points + means with VISIBLE ERROR BARS\n")
+cat("  4. Error bars represent SEM across subjects (width=0.4, linewidth=1)\n")
 cat("  5. Accuracy statistics calculated at subject level\n")
 cat("  6. Confusion matrices (Figures 3 & 4) show averaged proportions across subjects\n")
