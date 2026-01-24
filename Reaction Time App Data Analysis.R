@@ -3,7 +3,8 @@
 # Major Changes:
 # - ALL means and SEMs calculated from SUBJECT-LEVEL averages (n=3)
 # - ALL t-tests use subject-level data
-# - Figures 1 & 2: Show individual subject dots + mean dots with ERROR BARS
+# - Figures 1 & 2: Show individual subject dots with DIFFERENTIAL SHADING BY SUBJECT
+# - Each subject has a distinct color for easy identification
 # - ERROR BARS NOW MORE VISIBLE (width=0.4, linewidth=1)
 # ============================================================================
 
@@ -103,11 +104,10 @@ one_grand_summary_all <- one_subject_means_all %>%
   group_by(Stimulus) %>%
   summarise(
     n_subjects = n(),
+    sd_RT = ifelse(n() >= 2, sd(mean_RT, na.rm = TRUE), 0),
+    sem_RT = ifelse(n() >= 2, sd(mean_RT, na.rm = TRUE) / sqrt(n()), 0),
     mean_RT = mean(mean_RT, na.rm = TRUE),
-    sd_RT = sd(mean_RT, na.rm = TRUE),
-    sem_RT = sd(mean_RT, na.rm = TRUE) / sqrt(n()),
-    .groups = 'drop'
-  )
+    .groups = 'drop')
 
 # Grand means for one-button (CORRECT data) - for statistics
 one_grand_summary_correct <- one_subject_means_correct %>%
@@ -115,8 +115,8 @@ one_grand_summary_correct <- one_subject_means_correct %>%
   summarise(
     n_subjects = n(),
     mean_RT = mean(mean_RT, na.rm = TRUE),
-    sd_RT = sd(mean_RT, na.rm = TRUE),
-    sem_RT = sd(mean_RT, na.rm = TRUE) / sqrt(n()),
+    sd_RT = ifelse(n() >= 2, sd(mean_RT, na.rm = TRUE), 0),
+    sem_RT = ifelse(n() >= 2, sd(mean_RT, na.rm = TRUE) / sqrt(n()), 0),
     .groups = 'drop'
   )
 
@@ -125,9 +125,9 @@ three_grand_summary_all <- three_subject_means_all %>%
   group_by(Stimulus) %>%
   summarise(
     n_subjects = n(),
+    sd_RT = ifelse(n() >= 2, sd(mean_RT, na.rm = TRUE), 0),
+    sem_RT = ifelse(n() >= 2, sd(mean_RT, na.rm = TRUE) / sqrt(n()), 0),
     mean_RT = mean(mean_RT, na.rm = TRUE),
-    sd_RT = sd(mean_RT, na.rm = TRUE),
-    sem_RT = sd(mean_RT, na.rm = TRUE) / sqrt(n()),
     .groups = 'drop'
   )
 
@@ -137,8 +137,8 @@ three_grand_summary_correct <- three_subject_means_correct %>%
   summarise(
     n_subjects = n(),
     mean_RT = mean(mean_RT, na.rm = TRUE),
-    sd_RT = sd(mean_RT, na.rm = TRUE),
-    sem_RT = sd(mean_RT, na.rm = TRUE) / sqrt(n()),
+    sd_RT = ifelse(n() >= 2, sd(mean_RT, na.rm = TRUE), 0),
+    sem_RT = ifelse(n() >= 2, sd(mean_RT, na.rm = TRUE) / sqrt(n()), 0),
     .groups = 'drop'
   )
 
@@ -485,12 +485,17 @@ cat("\n")
 cat(sprintf("  Cohen's d = %.2f\n", colavita_d_3))
 
 # ============================================================================
-# FIGURE 1: ONE-BUTTON TASK with INDIVIDUAL SUBJECT POINTS AND VISIBLE ERROR BARS
+# FIGURE 1: ONE-BUTTON TASK with SUBJECT-SPECIFIC COLORS
 # ============================================================================
 
 cat("\n", rep("=", 70), "\n", sep = "")
-cat("CREATING FIGURES WITH INDIVIDUAL SUBJECT DATA AND VISIBLE ERROR BARS\n")
+cat("CREATING FIGURES WITH SUBJECT-SPECIFIC COLORS\n")
 cat(rep("=", 70), "\n\n", sep = "")
+
+# Define subject colors - distinct and visually appealing
+subject_colors <- c("S1" = "#08d8a2",   
+                    "S2" = "#06a77d",   
+                    "S3" = "#047658")   
 
 # Prepare data for plotting
 one_grand_summary_all$visual_containing <- ifelse(grepl("V", one_grand_summary_all$Stimulus), 
@@ -508,25 +513,28 @@ race_model_data_1 <- one_grand_summary_all[!is.na(one_grand_summary_all$RaceMode
 race_model_data_1$x_start <- as.numeric(race_model_data_1$Stimulus) - 0.4
 race_model_data_1$x_end <- as.numeric(race_model_data_1$Stimulus) + 0.4
 
-# Create Figure 1 with individual points AND VISIBLE ERROR BARS
+# Create Figure 1 with SUBJECT-SPECIFIC COLORS
 fig1 <- ggplot(one_grand_summary_all, aes(x = Stimulus, y = mean_RT)) +
-  # Individual subject points (smaller, semi-transparent)
+  # Individual subject points with DISTINCT COLORS
   geom_point(data = one_subject_means_all, 
-             aes(x = Stimulus, y = mean_RT),
-             size = 3, alpha = 0.6, color = "gray30",
-             position = position_jitter(width = 0.1, height = 0, seed = 42)) +
+             aes(x = Stimulus, y = mean_RT, color = Subject),
+             size = 4, alpha = 0.8, show.legend = FALSE,
+             position = position_jitter(width = 0.15, height = 0, seed = 42)) +
   # Race model predictions
   geom_segment(data = race_model_data_1,
                aes(x = x_start, xend = x_end, y = RaceModel, yend = RaceModel, 
                    linetype = "Race Model"),
                color = "red", linewidth = 1.5,
                inherit.aes = FALSE) +
-  # Mean points (filled)
+  # Mean points (filled) - PLOTTED AFTER INDIVIDUAL POINTS
   geom_point(aes(fill = visual_containing), 
              size = 5, shape = 21, color = "black", stroke = 1.5) +
-  # ERROR BARS - MADE MORE VISIBLE (width=0.4, linewidth=1)
+  # ERROR BARS - PLOTTED LAST SO THEY APPEAR ON TOP
   geom_errorbar(aes(ymin = mean_RT - sem_RT, ymax = mean_RT + sem_RT),
-                width = 0.4, linewidth = 1, color = "black") +
+                width = 0.3, linewidth = 1, color = "black") +
+  scale_color_manual(values = subject_colors,
+                     name = "Subject",
+                     labels = c("S1" = "S1", "S2" = "S2", "S3" = "S3")) +
   scale_fill_manual(values = c("Visual" = "#2E86AB", "Non-Visual" = "#A23B72"),
                     name = "",
                     labels = c("Non-Visual" = "Non-Visual", "Visual" = "Visual")) +
@@ -548,13 +556,14 @@ fig1 <- ggplot(one_grand_summary_all, aes(x = Stimulus, y = mean_RT)) +
     axis.text.y = element_text(size = 18),
     legend.position = "top",
     legend.text = element_text(size = 16),
+    legend.title = element_text(size = 16, face = "bold"),
     axis.line = element_line(color = "black", linewidth = 0.5, linetype = 1))
 
-ggsave("Figure1_OneButton_MeanRT_SubjectLevel.png", fig1, width = 10, height = 6, dpi = 300)
-cat("✓ Figure 1 saved: Figure1_OneButton_MeanRT_SubjectLevel.png\n")
+ggsave("Figure1_OneButton_MeanRT_SubjectColors.png", fig1, width = 10, height = 6, dpi = 300)
+cat("✓ Figure 1 saved: Figure1_OneButton_MeanRT_SubjectColors.png\n")
 
 # ============================================================================
-# FIGURE 2: THREE-BUTTON TASK with INDIVIDUAL SUBJECT POINTS AND VISIBLE ERROR BARS
+# FIGURE 2: THREE-BUTTON TASK with SUBJECT-SPECIFIC COLORS
 # ============================================================================
 
 # Prepare data for plotting
@@ -573,19 +582,22 @@ race_model_data_3 <- three_grand_summary_all[!is.na(three_grand_summary_all$Race
 race_model_data_3$x_start <- as.numeric(race_model_data_3$Stimulus) - 0.4
 race_model_data_3$x_end <- as.numeric(race_model_data_3$Stimulus) + 0.4
 
-# Create Figure 2 with individual points AND VISIBLE ERROR BARS
+# Create Figure 2 with SUBJECT-SPECIFIC COLORS
 fig2 <- ggplot(three_grand_summary_all, aes(x = Stimulus, y = mean_RT)) +
-  # Individual subject points (smaller, semi-transparent)
+  # Individual subject points with DISTINCT COLORS
   geom_point(data = three_subject_means_all, 
-             aes(x = Stimulus, y = mean_RT),
-             size = 3, alpha = 0.6, color = "gray30",
-             position = position_jitter(width = 0.1, height = 0, seed = 42)) +
-  # Mean points (filled)
+             aes(x = Stimulus, y = mean_RT, color = Subject),
+             size = 4, alpha = 0.8, show.legend = FALSE,
+             position = position_jitter(width = 0.15, height = 0, seed = 42)) +
+  # Mean points (filled) - PLOTTED AFTER INDIVIDUAL POINTS
   geom_point(aes(fill = visual_containing), 
              size = 5, shape = 21, color = "black", stroke = 1.5) +
-  # ERROR BARS - MADE MORE VISIBLE (width=0.4, linewidth=1)
+  # ERROR BARS - PLOTTED LAST SO THEY APPEAR ON TOP
   geom_errorbar(aes(ymin = mean_RT - sem_RT, ymax = mean_RT + sem_RT),
-                width = 0.4, linewidth = 1, color = "black") +
+                width = 0.3, linewidth = 1, color = "black") +
+  scale_color_manual(values = subject_colors,
+                     name = "Subject",
+                     labels = c("S1" = "S1", "S2" = "S2", "S3" = "S3")) +
   scale_fill_manual(values = c("Visual" = "#2E86AB", "Non-Visual" = "#A23B72"),
                     name = "",
                     labels = c("Non-Visual" = "Non-Visual", "Visual" = "Visual")) +
@@ -604,10 +616,11 @@ fig2 <- ggplot(three_grand_summary_all, aes(x = Stimulus, y = mean_RT)) +
     axis.text.y = element_text(size = 18),
     legend.position = "top",
     legend.text = element_text(size = 16),
+    legend.title = element_text(size = 16, face = "bold"),
     axis.line = element_line(color = "black", linewidth = 0.5, linetype = 1))
 
-ggsave("Figure2_ThreeButton_MeanRT_SubjectLevel.png", fig2, width = 10, height = 6, dpi = 300)
-cat("✓ Figure 2 saved: Figure2_ThreeButton_MeanRT_SubjectLevel.png\n")
+ggsave("Figure2_ThreeButton_MeanRT_SubjectColors.png", fig2, width = 10, height = 6, dpi = 300)
+cat("✓ Figure 2 saved: Figure2_ThreeButton_MeanRT_SubjectColors.png\n")
 
 # ============================================================================
 # FIGURE 3 & 4: CONFUSION MATRICES (unchanged from original)
@@ -900,7 +913,13 @@ cat("=== ALL ANALYSIS COMPLETED WITH SUBJECT-LEVEL STATISTICS ===\n")
 cat("\nKey Changes:\n")
 cat("  1. All means/SEMs calculated from subject averages (n=3)\n")
 cat("  2. All t-tests use subject-level data\n")
-cat("  3. Figures 1 & 2 show individual subject points + means with VISIBLE ERROR BARS\n")
-cat("  4. Error bars represent SEM across subjects (width=0.4, linewidth=1)\n")
-cat("  5. Accuracy statistics calculated at subject level\n")
-cat("  6. Confusion matrices (Figures 3 & 4) show averaged proportions across subjects\n")
+cat("  3. Figures 1 & 2 show SUBJECT-SPECIFIC COLORS:\n")
+cat("     - Subject 1: RED (#E63946)\n")
+cat("     - Subject 2: GREEN (#06A77D)\n")
+cat("     - Subject 3: BLUE (#457B9D)\n")
+cat("  4. Individual subject points are larger and color-coded\n")
+cat("  5. Mean points remain filled by visual/non-visual condition\n")
+cat("  6. Error bars visible on top of all points\n")
+cat("  7. Legend shows both subject colors and condition fills\n")
+cat("  8. Accuracy statistics calculated at subject level\n")
+cat("  9. Confusion matrices show averaged proportions across subjects\n")
