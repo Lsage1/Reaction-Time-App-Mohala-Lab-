@@ -6,6 +6,7 @@
 # - Figures 1 & 2: Show individual subject dots with DIFFERENTIAL SHADING BY SUBJECT
 # - Each subject has a distinct color for easy identification
 # - ERROR BARS NOW MORE VISIBLE (width=0.4, linewidth=1)
+# - LARGER FONT SIZES for all figures (updated)
 # ============================================================================
 
 # Load libraries
@@ -485,11 +486,11 @@ cat("\n")
 cat(sprintf("  Cohen's d = %.2f\n", colavita_d_3))
 
 # ============================================================================
-# FIGURE 1: ONE-BUTTON TASK with SUBJECT-SPECIFIC COLORS
+# FIGURE 1: ONE-BUTTON TASK with SUBJECT-SPECIFIC COLORS - LARGER FONTS
 # ============================================================================
 
 cat("\n", rep("=", 70), "\n", sep = "")
-cat("CREATING FIGURES WITH SUBJECT-SPECIFIC COLORS\n")
+cat("CREATING FIGURES WITH SUBJECT-SPECIFIC COLORS AND LARGER FONTS\n")
 cat(rep("=", 70), "\n\n", sep = "")
 
 # Define subject colors - distinct and visually appealing
@@ -513,25 +514,25 @@ race_model_data_1 <- one_grand_summary_all[!is.na(one_grand_summary_all$RaceMode
 race_model_data_1$x_start <- as.numeric(race_model_data_1$Stimulus) - 0.4
 race_model_data_1$x_end <- as.numeric(race_model_data_1$Stimulus) + 0.4
 
-# Create Figure 1 with SUBJECT-SPECIFIC COLORS
+# Create Figure 1 with SUBJECT-SPECIFIC COLORS and LARGER FONTS
 fig1 <- ggplot(one_grand_summary_all, aes(x = Stimulus, y = mean_RT)) +
   # Individual subject points with DISTINCT COLORS
   geom_point(data = one_subject_means_all, 
              aes(x = Stimulus, y = mean_RT, color = Subject),
-             size = 4, alpha = 0.8, show.legend = FALSE,
+             size = 5, alpha = 0.8, show.legend = FALSE,
              position = position_jitter(width = 0.15, height = 0, seed = 42)) +
   # Race model predictions
   geom_segment(data = race_model_data_1,
                aes(x = x_start, xend = x_end, y = RaceModel, yend = RaceModel, 
                    linetype = "Race Model"),
-               color = "red", linewidth = 1.5,
+               color = "red", linewidth = 2,
                inherit.aes = FALSE) +
   # Mean points (filled) - PLOTTED AFTER INDIVIDUAL POINTS
   geom_point(aes(fill = visual_containing), 
-             size = 5, shape = 21, color = "black", stroke = 1.5) +
+             size = 6, shape = 21, color = "black", stroke = 2) +
   # ERROR BARS - PLOTTED LAST SO THEY APPEAR ON TOP
   geom_errorbar(aes(ymin = mean_RT - sem_RT, ymax = mean_RT + sem_RT),
-                width = 0.3, linewidth = 1, color = "black") +
+                width = 0.35, linewidth = 1.2, color = "black") +
   scale_color_manual(values = subject_colors,
                      name = "Subject",
                      labels = c("S1" = "S1", "S2" = "S2", "S3" = "S3")) +
@@ -547,23 +548,23 @@ fig1 <- ggplot(one_grand_summary_all, aes(x = Stimulus, y = mean_RT)) +
     x = "Stimulus Type",
     y = "Reaction Time (s)"
   ) +
-  theme_classic(base_size = 18) +
+  theme_classic(base_size = 24) +
   theme(
-    plot.title = element_text(face = "bold", size = 22, hjust = 0.5),
-    axis.title = element_text(face = "bold", size = 20),
-    axis.text = element_text(size = 18),
-    axis.text.x = element_text(size = 18),
-    axis.text.y = element_text(size = 18),
+    plot.title = element_text(face = "bold", size = 32, hjust = 0.5),
+    axis.title = element_text(face = "bold", size = 28),
+    axis.text = element_text(size = 24),
+    axis.text.x = element_text(size = 24),
+    axis.text.y = element_text(size = 24),
     legend.position = "top",
-    legend.text = element_text(size = 16),
-    legend.title = element_text(size = 16, face = "bold"),
+    legend.text = element_text(size = 22),
+    legend.title = element_text(size = 22, face = "bold"),
     axis.line = element_line(color = "black", linewidth = 0.5, linetype = 1))
 
-ggsave("Figure1_OneButton_MeanRT_SubjectColors.png", fig1, width = 10, height = 6, dpi = 300)
+ggsave("Figure1_OneButton_MeanRT_SubjectColors.png", fig1, width = 12, height = 8, dpi = 300)
 cat("✓ Figure 1 saved: Figure1_OneButton_MeanRT_SubjectColors.png\n")
 
 # ============================================================================
-# FIGURE 2: THREE-BUTTON TASK with SUBJECT-SPECIFIC COLORS
+# FIGURE 2: THREE-BUTTON TASK with SUBJECT-SPECIFIC COLORS - LARGER FONTS
 # ============================================================================
 
 # Prepare data for plotting
@@ -582,19 +583,19 @@ race_model_data_3 <- three_grand_summary_all[!is.na(three_grand_summary_all$Race
 race_model_data_3$x_start <- as.numeric(race_model_data_3$Stimulus) - 0.4
 race_model_data_3$x_end <- as.numeric(race_model_data_3$Stimulus) + 0.4
 
-# Create Figure 2 with SUBJECT-SPECIFIC COLORS
+# Create Figure 2 with SUBJECT-SPECIFIC COLORS and LARGER FONTS
 fig2 <- ggplot(three_grand_summary_all, aes(x = Stimulus, y = mean_RT)) +
   # Individual subject points with DISTINCT COLORS
   geom_point(data = three_subject_means_all, 
              aes(x = Stimulus, y = mean_RT, color = Subject),
-             size = 4, alpha = 0.8, show.legend = FALSE,
+             size = 5, alpha = 0.8, show.legend = FALSE,
              position = position_jitter(width = 0.15, height = 0, seed = 42)) +
   # Mean points (filled) - PLOTTED AFTER INDIVIDUAL POINTS
   geom_point(aes(fill = visual_containing), 
-             size = 5, shape = 21, color = "black", stroke = 1.5) +
+             size = 6, shape = 21, color = "black", stroke = 2) +
   # ERROR BARS - PLOTTED LAST SO THEY APPEAR ON TOP
   geom_errorbar(aes(ymin = mean_RT - sem_RT, ymax = mean_RT + sem_RT),
-                width = 0.3, linewidth = 1, color = "black") +
+                width = 0.35, linewidth = 1.2, color = "black") +
   scale_color_manual(values = subject_colors,
                      name = "Subject",
                      labels = c("S1" = "S1", "S2" = "S2", "S3" = "S3")) +
@@ -607,23 +608,23 @@ fig2 <- ggplot(three_grand_summary_all, aes(x = Stimulus, y = mean_RT)) +
     x = "Stimulus Type",
     y = "Reaction Time (s)"
   ) +
-  theme_classic(base_size = 18) +
+  theme_classic(base_size = 24) +
   theme(
-    plot.title = element_text(face = "bold", size = 22, hjust = 0.5),
-    axis.title = element_text(face = "bold", size = 20),
-    axis.text = element_text(size = 18),
-    axis.text.x = element_text(size = 18),
-    axis.text.y = element_text(size = 18),
+    plot.title = element_text(face = "bold", size = 32, hjust = 0.5),
+    axis.title = element_text(face = "bold", size = 28),
+    axis.text = element_text(size = 24),
+    axis.text.x = element_text(size = 24),
+    axis.text.y = element_text(size = 24),
     legend.position = "top",
-    legend.text = element_text(size = 16),
-    legend.title = element_text(size = 16, face = "bold"),
+    legend.text = element_text(size = 22),
+    legend.title = element_text(size = 22, face = "bold"),
     axis.line = element_line(color = "black", linewidth = 0.5, linetype = 1))
 
-ggsave("Figure2_ThreeButton_MeanRT_SubjectColors.png", fig2, width = 10, height = 6, dpi = 300)
+ggsave("Figure2_ThreeButton_MeanRT_SubjectColors.png", fig2, width = 12, height = 8, dpi = 300)
 cat("✓ Figure 2 saved: Figure2_ThreeButton_MeanRT_SubjectColors.png\n")
 
 # ============================================================================
-# FIGURE 3 & 4: CONFUSION MATRICES (unchanged from original)
+# FIGURE 3 & 4: CONFUSION MATRICES - LARGER FONTS
 # ============================================================================
 
 # Function to normalize stimulus order
@@ -638,7 +639,7 @@ normalize_stimulus <- function(stim) {
   return(paste(sorted_letters, collapse = ""))
 }
 
-# FIGURE 3: One-button confusion matrix (SUBJECT-LEVEL)
+# FIGURE 3: One-button confusion matrix (SUBJECT-LEVEL) - LARGER FONTS
 cat("\n", rep("=", 70), "\n", sep = "")
 cat("CREATING CONFUSION MATRIX FOR ONE-BUTTON TASK (SUBJECT-LEVEL)\n")
 cat(rep("=", 70), "\n\n", sep = "")
@@ -700,7 +701,7 @@ fig3 <- ggplot(confusion_one_grand, aes(x = Stimulus, y = FeltStimulus, fill = m
   geom_tile(color = "black", linewidth = 0.5) +
   geom_text(aes(label = sprintf("%.2f", mean_proportion)), 
             color = ifelse(confusion_one_grand$mean_proportion > 0.5, "white", "black"), 
-            size = 7, fontface = "bold") +
+            size = 9, fontface = "bold") +
   scale_fill_gradient(low = "#E8F4F8", high = "#2E86AB", limits = c(0, 1),
                       name = "Proportion") +
   scale_x_discrete(drop = FALSE) +
@@ -710,21 +711,21 @@ fig3 <- ggplot(confusion_one_grand, aes(x = Stimulus, y = FeltStimulus, fill = m
     x = "Actual Stimulus",
     y = "Perceived Stimulus"
   ) +
-  theme_minimal(base_size = 18) +
+  theme_minimal(base_size = 24) +
   theme(
-    plot.title = element_text(face = "bold", size = 22, hjust = 0.5),
-    axis.title = element_text(face = "bold", size = 20),
-    axis.text = element_text(size = 18),
+    plot.title = element_text(face = "bold", size = 32, hjust = 0.5),
+    axis.title = element_text(face = "bold", size = 28),
+    axis.text = element_text(size = 24),
     panel.grid = element_blank(),
     panel.background = element_rect(fill = "white", color = NA),
     plot.background = element_rect(fill = "white", color = NA),
     legend.position = "none"
   )
 
-ggsave("Figure3_OneButton_ConfusionMatrix_SubjectLevel.png", fig3, width = 10, height = 8, dpi = 300)
+ggsave("Figure3_OneButton_ConfusionMatrix_SubjectLevel.png", fig3, width = 12, height = 10, dpi = 300)
 cat("✓ Figure 3 saved: Figure3_OneButton_ConfusionMatrix_SubjectLevel.png\n")
 
-# FIGURE 4: Three-button confusion matrix (SUBJECT-LEVEL)
+# FIGURE 4: Three-button confusion matrix (SUBJECT-LEVEL) - LARGER FONTS
 cat("\n", rep("=", 70), "\n", sep = "")
 cat("CREATING CONFUSION MATRIX FOR THREE-BUTTON TASK (SUBJECT-LEVEL)\n")
 cat(rep("=", 70), "\n\n", sep = "")
@@ -799,7 +800,7 @@ fig4 <- ggplot(confusion_three_grand, aes(x = Stimulus, y = FeltStimulus, fill =
   geom_tile(color = "black", linewidth = 0.5) +
   geom_text(aes(label = sprintf("%.2f", mean_proportion)), 
             color = ifelse(confusion_three_grand$mean_proportion > 0.5, "white", "black"), 
-            size = 7, fontface = "bold") +
+            size = 9, fontface = "bold") +
   scale_fill_gradient(low = "#E8F4F8", high = "#2E86AB", limits = c(0, 1),
                       name = "Proportion") +
   scale_x_discrete(drop = FALSE) +
@@ -809,18 +810,18 @@ fig4 <- ggplot(confusion_three_grand, aes(x = Stimulus, y = FeltStimulus, fill =
     x = "Actual Stimulus",
     y = "Perceived Stimulus"
   ) +
-  theme_minimal(base_size = 18) +
+  theme_minimal(base_size = 24) +
   theme(
-    plot.title = element_text(face = "bold", size = 22, hjust = 0.5),
-    axis.title = element_text(face = "bold", size = 20),
-    axis.text = element_text(size = 18),
+    plot.title = element_text(face = "bold", size = 32, hjust = 0.5),
+    axis.title = element_text(face = "bold", size = 28),
+    axis.text = element_text(size = 24),
     panel.grid = element_blank(),
     panel.background = element_rect(fill = "white", color = NA),
     plot.background = element_rect(fill = "white", color = NA),
     legend.position = "none"
   )
 
-ggsave("Figure4_ThreeButton_ConfusionMatrix_SubjectLevel.png", fig4, width = 10, height = 8, dpi = 300)
+ggsave("Figure4_ThreeButton_ConfusionMatrix_SubjectLevel.png", fig4, width = 12, height = 10, dpi = 300)
 cat("✓ Figure 4 saved: Figure4_ThreeButton_ConfusionMatrix_SubjectLevel.png\n")
 
 # ============================================================================
@@ -910,17 +911,17 @@ cat(sprintf("  Colavita Effect:       %.0f ms (%.1f%% faster), p = %.4f\n\n",
             difference_ms_3, percent_diff_3, colavita_test_3$p.value))
 
 cat("=== ALL ANALYSIS COMPLETED WITH SUBJECT-LEVEL STATISTICS ===\n")
-cat("\nKey Changes:\n")
+cat("\nKey Changes in This Version:\n")
 cat("  1. All means/SEMs calculated from subject averages (n=3)\n")
 cat("  2. All t-tests use subject-level data from ALL TRIALS (not just correct)\n")
-cat("  3. Figures 1 & 2 show SUBJECT-SPECIFIC COLORS:\n")
-cat("     - Subject 1: RED (#E63946)\n")
-cat("     - Subject 2: GREEN (#06A77D)\n")
-cat("     - Subject 3: BLUE (#457B9D)\n")
-cat("  4. Individual subject points are larger and color-coded\n")
-cat("  5. Mean points remain filled by visual/non-visual condition\n")
-cat("  6. Error bars visible on top of all points\n")
-cat("  7. Subject colors NOT shown in legend (cleaner appearance)\n")
-cat("  8. Accuracy statistics calculated at subject level\n")
-cat("  9. Confusion matrices show averaged proportions across subjects\n")
-cat("  10. Statistics match figures (both use ALL trials)\n")
+cat("  3. LARGER FONT SIZES for all figures:\n")
+cat("     - Base font size increased from 18 to 24\n")
+cat("     - Plot titles: 32pt (was 22pt)\n")
+cat("     - Axis titles: 28pt (was 20pt)\n")
+cat("     - Axis text: 24pt (was 18pt)\n")
+cat("     - Legend text: 22pt (was 16pt)\n")
+cat("     - Confusion matrix text: 9pt (was 7pt)\n")
+cat("  4. Slightly larger point sizes and error bars\n")
+cat("  5. Increased figure dimensions for better readability\n")
+cat("  6. Subject-specific colors maintained\n")
+cat("  7. All statistical analyses unchanged\n")
