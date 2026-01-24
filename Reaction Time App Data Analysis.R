@@ -166,10 +166,10 @@ cat("\n", rep("=", 70), "\n", sep = "")
 cat("RACE MODEL ANALYSIS - ONE-BUTTON TASK (SUBJECT-LEVEL)\n")
 cat(rep("=", 70), "\n\n", sep = "")
 
-# Get unimodal subject-level means
-V_subjects <- one_subject_means_correct %>% filter(Stimulus == "V") %>% pull(mean_RT)
-A_subjects <- one_subject_means_correct %>% filter(Stimulus == "A") %>% pull(mean_RT)
-H_subjects <- one_subject_means_correct %>% filter(Stimulus == "H") %>% pull(mean_RT)
+# Get unimodal subject-level means (using ALL trials now)
+V_subjects <- one_subject_means_all %>% filter(Stimulus == "V") %>% pull(mean_RT)
+A_subjects <- one_subject_means_all %>% filter(Stimulus == "A") %>% pull(mean_RT)
+H_subjects <- one_subject_means_all %>% filter(Stimulus == "H") %>% pull(mean_RT)
 
 # Calculate race model predictions for each subject
 race_predictions_by_subject <- data.frame(
@@ -205,7 +205,7 @@ print(race_predictions)
 # ============================================================================
 
 cat("\n", rep("-", 70), "\n", sep = "")
-cat("T-TESTS FOR RACE MODEL VIOLATIONS (One-Button Task, n=3 subjects)\n")
+cat("T-TESTS FOR RACE MODEL VIOLATIONS (One-Button Task, ALL trials, n=3 subjects)\n")
 cat(rep("-", 70), "\n\n", sep = "")
 
 # Function to perform t-test using subject-level data
@@ -256,13 +256,13 @@ test_race_model_subjects <- function(subject_means, stimulus_name, race_pred_vec
 results_one_button <- list()
 
 results_one_button$VA <- test_race_model_subjects(
-  one_subject_means_correct, "VA", race_predictions_by_subject$VA_race)
+  one_subject_means_all, "VA", race_predictions_by_subject$VA_race)
 results_one_button$VH <- test_race_model_subjects(
-  one_subject_means_correct, "VH", race_predictions_by_subject$VH_race)
+  one_subject_means_all, "VH", race_predictions_by_subject$VH_race)
 results_one_button$AH <- test_race_model_subjects(
-  one_subject_means_correct, "AH", race_predictions_by_subject$AH_race)
+  one_subject_means_all, "AH", race_predictions_by_subject$AH_race)
 results_one_button$VAH <- test_race_model_subjects(
-  one_subject_means_correct, "VAH", race_predictions_by_subject$VAH_race)
+  one_subject_means_all, "VAH", race_predictions_by_subject$VAH_race)
 
 # Print results
 for (result in results_one_button) {
@@ -299,18 +299,18 @@ for (result in results_one_button) {
 # ============================================================================
 
 cat("\n", rep("-", 70), "\n", sep = "")
-cat("COLAVITA VISUAL DOMINANCE EFFECT (One-Button Task, n=3 subjects)\n")
+cat("COLAVITA VISUAL DOMINANCE EFFECT (One-Button Task, ALL trials, n=3 subjects)\n")
 cat(rep("-", 70), "\n\n", sep = "")
 
-# Calculate subject-level means for visual multimodal (VA, VH, VAH)
-vis_multi_subject <- one_subject_means_correct %>%
+# Calculate subject-level means for visual multimodal (VA, VH, VAH) - using ALL trials
+vis_multi_subject <- one_subject_means_all %>%
   filter(Stimulus %in% c("VA", "VH", "VAH")) %>%
   group_by(Subject) %>%
   summarise(mean_RT = mean(mean_RT), .groups = 'drop') %>%
   pull(mean_RT)
 
-# Calculate subject-level means for non-visual multimodal (AH)
-nonvis_multi_subject <- one_subject_means_correct %>%
+# Calculate subject-level means for non-visual multimodal (AH) - using ALL trials
+nonvis_multi_subject <- one_subject_means_all %>%
   filter(Stimulus == "AH") %>%
   pull(mean_RT)
 
@@ -356,10 +356,10 @@ cat("\n", rep("=", 70), "\n", sep = "")
 cat("RACE MODEL ANALYSIS - THREE-BUTTON TASK (SUBJECT-LEVEL)\n")
 cat(rep("=", 70), "\n\n", sep = "")
 
-# Get unimodal subject-level means
-V_subjects_3 <- three_subject_means_correct %>% filter(Stimulus == "V") %>% pull(mean_RT)
-A_subjects_3 <- three_subject_means_correct %>% filter(Stimulus == "A") %>% pull(mean_RT)
-H_subjects_3 <- three_subject_means_correct %>% filter(Stimulus == "H") %>% pull(mean_RT)
+# Get unimodal subject-level means (using ALL trials now)
+V_subjects_3 <- three_subject_means_all %>% filter(Stimulus == "V") %>% pull(mean_RT)
+A_subjects_3 <- three_subject_means_all %>% filter(Stimulus == "A") %>% pull(mean_RT)
+H_subjects_3 <- three_subject_means_all %>% filter(Stimulus == "H") %>% pull(mean_RT)
 
 # Calculate race model predictions for each subject
 race_predictions_by_subject_3 <- data.frame(
@@ -391,20 +391,20 @@ cat("\nGrand mean race model predictions:\n")
 print(race_predictions_3)
 
 cat("\n", rep("-", 70), "\n", sep = "")
-cat("T-TESTS FOR RACE MODEL VIOLATIONS (Three-Button Task, n=3 subjects)\n")
+cat("T-TESTS FOR RACE MODEL VIOLATIONS (Three-Button Task, ALL trials, n=3 subjects)\n")
 cat(rep("-", 70), "\n\n", sep = "")
 
 # Test three-button task
 results_three_button <- list()
 
 results_three_button$VA <- test_race_model_subjects(
-  three_subject_means_correct, "VA", race_predictions_by_subject_3$VA_race)
+  three_subject_means_all, "VA", race_predictions_by_subject_3$VA_race)
 results_three_button$VH <- test_race_model_subjects(
-  three_subject_means_correct, "VH", race_predictions_by_subject_3$VH_race)
+  three_subject_means_all, "VH", race_predictions_by_subject_3$VH_race)
 results_three_button$AH <- test_race_model_subjects(
-  three_subject_means_correct, "AH", race_predictions_by_subject_3$AH_race)
+  three_subject_means_all, "AH", race_predictions_by_subject_3$AH_race)
 results_three_button$VAH <- test_race_model_subjects(
-  three_subject_means_correct, "VAH", race_predictions_by_subject_3$VAH_race)
+  three_subject_means_all, "VAH", race_predictions_by_subject_3$VAH_race)
 
 for (result in results_three_button) {
   cat(sprintf("\n%s Condition:\n", result$stimulus))
@@ -437,18 +437,18 @@ for (result in results_three_button) {
 
 # Colavita effect - three-button (SUBJECT-LEVEL)
 cat("\n", rep("-", 70), "\n", sep = "")
-cat("COLAVITA VISUAL DOMINANCE EFFECT (Three-Button Task, n=3 subjects)\n")
+cat("COLAVITA VISUAL DOMINANCE EFFECT (Three-Button Task, ALL trials, n=3 subjects)\n")
 cat(rep("-", 70), "\n\n", sep = "")
 
-# Calculate subject-level means for visual multimodal
-vis_multi_subject_3 <- three_subject_means_correct %>%
+# Calculate subject-level means for visual multimodal - using ALL trials
+vis_multi_subject_3 <- three_subject_means_all %>%
   filter(Stimulus %in% c("VA", "VH", "VAH")) %>%
   group_by(Subject) %>%
   summarise(mean_RT = mean(mean_RT), .groups = 'drop') %>%
   pull(mean_RT)
 
-# Calculate subject-level means for non-visual multimodal
-nonvis_multi_subject_3 <- three_subject_means_correct %>%
+# Calculate subject-level means for non-visual multimodal - using ALL trials
+nonvis_multi_subject_3 <- three_subject_means_all %>%
   filter(Stimulus == "AH") %>%
   pull(mean_RT)
 
@@ -912,7 +912,7 @@ cat(sprintf("  Colavita Effect:       %.0f ms (%.1f%% faster), p = %.4f\n\n",
 cat("=== ALL ANALYSIS COMPLETED WITH SUBJECT-LEVEL STATISTICS ===\n")
 cat("\nKey Changes:\n")
 cat("  1. All means/SEMs calculated from subject averages (n=3)\n")
-cat("  2. All t-tests use subject-level data\n")
+cat("  2. All t-tests use subject-level data from ALL TRIALS (not just correct)\n")
 cat("  3. Figures 1 & 2 show SUBJECT-SPECIFIC COLORS:\n")
 cat("     - Subject 1: RED (#E63946)\n")
 cat("     - Subject 2: GREEN (#06A77D)\n")
@@ -920,6 +920,7 @@ cat("     - Subject 3: BLUE (#457B9D)\n")
 cat("  4. Individual subject points are larger and color-coded\n")
 cat("  5. Mean points remain filled by visual/non-visual condition\n")
 cat("  6. Error bars visible on top of all points\n")
-cat("  7. Legend shows both subject colors and condition fills\n")
+cat("  7. Subject colors NOT shown in legend (cleaner appearance)\n")
 cat("  8. Accuracy statistics calculated at subject level\n")
 cat("  9. Confusion matrices show averaged proportions across subjects\n")
+cat("  10. Statistics match figures (both use ALL trials)\n")
